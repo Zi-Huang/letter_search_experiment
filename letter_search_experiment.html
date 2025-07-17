@@ -52,23 +52,25 @@
     on_finish: () => jsPsych.data.displayData()
   });
 
-  function generateNaturalLine(targetLetter, targetCount, lineLength = 45) {
+  function generateFakeLine(targetLetter, targetCount, lineLength = 45) {
     const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let words = [];
-    let length = 0;
-
-    while (length < lineLength - 5) {
-      let wordLen = Math.floor(Math.random() * 4) + 2;
+    let line = '';
+    while (line.length < lineLength - 5) {
+      let wordLength = Math.floor(Math.random() * 4) + 2;
       let word = '';
-      for (let i = 0; i < wordLen; i++) {
+      for (let i = 0; i < wordLength; i++) {
         word += alphabet[Math.floor(Math.random() * alphabet.length)];
       }
-      words.push(word);
-      length += word.length + 1;
+      if (line.length + word.length + 1 <= lineLength) {
+        line += word + ' ';
+      } else {
+        break;
+      }
     }
-
-    let line = words.join(' ').substring(0, lineLength);
     line = line.trim();
+    while (line.length < lineLength) {
+      line += alphabet[Math.floor(Math.random() * alphabet.length)];
+    }
 
     let flat = line.split('');
     let positions = [];
@@ -79,8 +81,9 @@
         positions.push(idx);
       }
     }
-    return flat.join('').replace(/^\s+|\s+$/g, '');
+    return flat.join('');
   }
+
 
   const pages = [];
   const answers = [];
