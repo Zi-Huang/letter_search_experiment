@@ -26,7 +26,7 @@
       cursor: pointer;
       user-select: none;
       font-size: 20px;
-      line-height: 1.4;
+      line-height: 1.6;
     }
     .letter-selected-correct {
       background-color: gold;
@@ -84,7 +84,6 @@
     return flat.join('');
   }
 
-
   const pages = [];
   const answers = [];
   for (let p = 0; p < 20; p++) {
@@ -92,7 +91,7 @@
     let totalTargets = 0;
     for (let i = 0; i < 25; i++) {
       let lineTargets = Math.floor(Math.random() * 2) + 1;
-      const line = generateNaturalLine('A', lineTargets);
+      const line = generateFakeLine('A', lineTargets);
       pageText.push(line);
       totalTargets += lineTargets;
     }
