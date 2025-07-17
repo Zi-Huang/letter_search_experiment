@@ -108,7 +108,18 @@
   pages.forEach((page, index) => {
     timeline.push({
       type: jsPsychSurveyText,
-      preamble: `<div class="monofont">${page.text}</div>`,
+      preamble: function() {
+        let html = '<div class="monofont">';
+        page.text.forEach((line, i) => {
+          line.split('').forEach((char, j) => {
+            const id = `char_${index}_${i}_${j}`;
+            html += `<span id="${id}" class="letter-button" onclick="toggleLetter('${id}', '${char}')">${char}</span>`;
+          });
+          html += '<br>';
+        });
+        html += '</div>';
+        return html;
+      },
       questions: [{
         prompt: `Page ${index + 1}: How many A's did you find?`,
         name: `count_${index + 1}`,
