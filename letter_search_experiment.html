@@ -50,3 +50,150 @@
 <body></body>
 <script>
   const jsPsych = initJsPsych({
+    on_finish: () => jsPsych.data.displayData()
+  });
+
+  // 建立假文章，每行長度不固定，有隨機單字與空格
+  function generateNaturalLine(targetLetter, targetCount, lineLength = 45) {
+    const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let words = [];
+    let length = 0;
+
+    while (length < lineLength - 5) {
+      let wordLen = Math.floor(Math.random() * 4) + 2; // 單字長度 2~5
+      let word = '';
+      for (let i = 0; i < wordLen; i++) {
+        word += alphabet[Math.floor(Math.random() * alphabet.length)];
+      }
+      words.push(word);
+      length += word.length + 1;
+    }
+
+    let line = words.join(' ').substring(0, lineLength);
+    line = line.trim();
+
+    let flat = line.split('');
+    let positions = [];
+    while (positions.length < targetCount) {
+      let idx = Math.floor(Math.random() * flat.length);
+      if (flat[idx] !== targetLetter && flat[idx] !== ' ') {
+        flat[idx] = targetLetter;
+        positions.push(idx);
+      }
+    }
+    return flat.join('').replace(/^\s+|\s+$/g, '');
+  }
+
+  const pages = [];
+  const answers = [];
+  for (let p = 0; p < 20; p++) {
+    let pageText = [];
+    let totalTargets = 0;
+    for (let i = 0; i < 25; i++) {
+      let lineTargets = Math.floor(Math.random() * 2) + 1;
+      const line = generateNaturalLine('A', lineTargets);
+      pageText.push(line);
+      totalTargets += lineTargets;
+    }
+    const finalTotal = Math.max(8, Math.min(15, totalTargets));
+    answers.push(finalTotal);
+    pages.push({ text: pageText, answer: finalTotal });
+  }
+
+  const timeline = [];
+
+  timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: '<h2>Please read the text below and find the letter "A"</h2><p>Total: 20 pages. Click the letters you found, then enter the number of A\'s you counted.</p>',
+    choices: ['Start']
+  });
+
+  pages.forEach((page, index) => {
+    timeline.push({
+      type: jsPsychSurveyText,
+      preamble: function () {
+        let html = '<div class="monofont">';
+        page.text.forEach((line, i) => {
+          html += '<div class="letter-line">';
+          line.split('').forEach((char, j) => {
+            const id = `char_${index}_${i}_${j}`;
+            html += `<span id="${id}" class="letter-button" onclick="toggleLetter('${id}', '${char}')">${char}</span>`;
+          });
+          html += '</div>';
+        });
+        html += '</div>';
+        return html;
+      },
+      questions: [{
+        prompt: `Page ${index + 1}: How many A's did you find?`,
+        name: `count_${index + 1}`,
+        required: true
+      }],
+      data: {
+        correct_answer: page.answer,
+        page_index: index + 1
+      },
+      trial_duration: 120000,
+      on_finish: function (data) {
+        const input = parseInt(data.response[`count_${data.page_index}`]);
+        data.user_answer = input;
+        data.correct = (input === data.correct_answer);
+        data.correct_diff = Math.min(input, data.correct_answer);
+        data.page_time_sec = Math.round(data.rt / 1000);
+      }
+    });
+  });
+
+  timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: function () {
+      const trials = jsPsych.data.get().filter({ trial_type: 'survey-text' }).values();
+      let resultHTML = "<h2>Results</h2><ol>";
+      let totalCorrect = 0;
+      let totalAnswer = 0;
+      let totalTime = 0;
+
+      trials.forEach(trial => {
+        const page = trial.page_index;
+        const correctAns = trial.correct_answer;
+        const userAns = trial.user_answer;
+        const matched = Math.min(correctAns, userAns);
+        const timeSpent = trial.page_time_sec || 0;
+        totalCorrect += matched;
+        totalAnswer += correctAns;
+        totalTime += timeSpent;
+        const status = `${matched}/${correctAns}`;
+
+        resultHTML += `
+          <li>
+            Page ${page}: Actual = <strong>${correctAns}</strong>, Your Answer = <strong>${userAns}</strong> → ${status}<br>
+            Time Spent: ${timeSpent} seconds
+          </li>
+        `;
+      });
+
+      resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
+      resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
+      return resultHTML;
+    },
+    choices: ['Finish']
+  });
+
+  function toggleLetter(id, char) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.classList.contains('letter-selected-correct') || el.classList.contains('letter-selected-wrong')) {
+      el.classList.remove('letter-selected-correct');
+      el.classList.remove('letter-selected-wrong');
+    } else {
+      if (char === 'A') {
+        el.classList.add('letter-selected-correct');
+      } else {
+        el.classList.add('letter-selected-wrong');
+      }
+    }
+  }
+
+  jsPsych.run(timeline);
+</script>
+</html>
