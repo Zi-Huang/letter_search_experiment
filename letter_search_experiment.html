@@ -9,7 +9,7 @@
   <link href="jspsych.css" rel="stylesheet" />
   <style>
     body {
-     font-family: Arial, sans-serif;
+     Times New Roman, serif;
       padding: 40px;
     }
     .jspsych-content {
@@ -67,45 +67,46 @@
   const answers = [];
   for (let p = 0; p < 20; p++) {
     let pageText = [];
-    let totalTargets = 8;
-    let inserted = 0;
+    let totalTargets = 0;
     for (let i = 0; i < 25; i++) {
-      let remaining = totalTargets - inserted;
-      let lineTargets = remaining >= 2 ? Math.floor(Math.random() * 2) + 1 : remaining;
+      let lineTargets = Math.floor(Math.random() * 2) + 1; // 1-2 A per line
       let line = generateFakeLine('A', lineTargets, 45);
       pageText.push(line);
-      inserted += lineTargets;
+      totalTargets += lineTargets;
     }
-    pages.push(pageText.join('\n'));
-    answers.push(8);
+    let finalTotal = Math.max(8, Math.min(15, totalTargets));
+    answers.push(finalTotal);
+    pages.push({ text: pageText.join('\n'), answer: finalTotal });
   }
 
   const timeline = [];
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>請閱讀文章段落並找出 "A"</h2><p>共 20 頁，請輸入你看到的數量</p>',
-    choices: ['開始']
+    stimulus: '<h2>Letter Search Task</h2><p>You will read 20 pages of random text. Each page contains between 8 and 15 "A" letters. Please count them and enter your answer within 2 minutes per page.</p>',
+    choices: ['Start']
   });
 
-  pages.forEach((text, index) => {
-    let correctAnswer = answers[index];
+  pages.forEach((page, index) => {
     timeline.push({
       type: jsPsychSurveyText,
-      preamble: `<div class="monofont">${text}</div>`,
+      preamble: `<div class="monofont">${page.text}</div>`,
       questions: [{
-        prompt: `第 ${index + 1} 頁：你看到幾個 A？`,
+        prompt: `Page ${index + 1}: How many A's did you find?`,
         name: `count_${index + 1}`,
         required: true
       }],
       data: {
-        correct_answer: correctAnswer,
+        correct_answer: page.answer,
         page_index: index + 1
       },
+      trial_duration: 120000, // 2 minutes
       on_finish: function (data) {
-        let input = parseInt(data.response[`count_${index + 1}`]);
+        let input = parseInt(data.response[`count_${data.page_index}`]);
         data.user_answer = input;
         data.correct = (input === data.correct_answer);
+        data.correct_diff = Math.min(input, data.correct_answer);
+        data.page_time_sec = Math.round(data.rt / 1000);
       }
     });
   });
@@ -114,30 +115,37 @@
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
       let trials = jsPsych.data.get().filter({ trial_type: 'survey-text' }).values();
-      let resultHTML = "<h2>答題結果</h2><ol>";
-      let correctCount = 0;
+      let resultHTML = "<h2>Results</h2><ol>";
+      let totalCorrect = 0;
+      let totalAnswer = 0;
+      let totalTime = 0;
 
       trials.forEach(trial => {
         let page = trial.page_index;
         let correctAns = trial.correct_answer;
         let userAns = trial.user_answer;
-        let isCorrect = trial.correct;
-        let status = isCorrect ? "✅ 正確" : "❌ 錯誤";
-        if (isCorrect) correctCount++;
+        let matched = Math.min(correctAns, userAns);
+        let timeSpent = trial.page_time_sec || 0;
+        totalCorrect += matched;
+        totalAnswer += correctAns;
+        totalTime += timeSpent;
+        let status = (userAns === correctAns) ? "✅ Correct" : `⚠️ ${matched}/${correctAns} Correct`;
 
         resultHTML += `
           <li>
-            第 ${page} 頁：實際有 <strong>${correctAns}</strong> 個 A，
-            你填了 <strong>${userAns}</strong> → ${status}
+            Page ${page}: Actual = <strong>${correctAns}</strong>, Your Answer = <strong>${userAns}</strong> → ${status}<br>
+            Time Spent: ${timeSpent} seconds
           </li>
         `;
       });
 
-      resultHTML += `</ol><p><strong>總共答對 ${correctCount} / ${trials.length} 頁</strong></p>`;
+      resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect} / ${totalAnswer}</strong></p>`;
+      resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
       return resultHTML;
     },
-    choices: ['完成']
+    choices: ['Finish']
   });
+
   jsPsych.run(timeline);
 </script>
 </html>
