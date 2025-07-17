@@ -4,65 +4,43 @@
   <meta charset="UTF-8" />
   <title>Letter Search Experiment</title>
   <script src="jspsych.js"></script>
-  <script src="plugin-html-keyboard-response.js"></script>
   <script src="plugin-html-button-response.js"></script>
-  <script src="plugin-survey-text.js"></script>
   <link href="jspsych.css" rel="stylesheet" />
   <style>
     body {
-      font-family: "Times New Roman", serif;
+      font-family: Times New Roman, serif;
       padding: 40px;
-      background: #f4f4f4;
     }
     .jspsych-content {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: auto;
       font-size: 20px;
-      text-align: center;
     }
-    .letter-grid {
-      font-family: monospace;
-      font-size: 24px;
-      line-height: 1.4;
+    .letter-button {
       display: inline-block;
-      text-align: left;
-      user-select: none;
-      white-space: pre;
-    }
-    .letter {
-      display: inline-block;
-      padding: 2px 4px;
-      margin: 0;
-      border-radius: 3px;
+      padding: 2px 3px;
+      margin: 0px;
+      border-radius: 2px;
       cursor: pointer;
+      user-select: none;
+      font-size: 20px;
+      line-height: 1.2;
     }
-    .highlight-a {
+    .letter-selected-correct {
       background-color: gold;
       color: black;
     }
-    .highlight-non-a {
+    .letter-selected-wrong {
       background-color: lightgray;
       color: black;
     }
-    .input-section {
-      margin-top: 20px;
-    }
-    input[type="number"] {
-      font-size: 18px;
-      padding: 4px 10px;
-      width: 80px;
-      text-align: center;
-    }
-    button {
-      font-size: 18px;
-      padding: 6px 16px;
+    .letter-line {
+      margin-bottom: 6px;
+      white-space: pre;
     }
   </style>
 </head>
-<body>
-
-<div id="experiment" class="jspsych-content"></div>
-
+<body></body>
 <script>
   const jsPsych = initJsPsych({
     on_finish: () => jsPsych.data.displayData()
@@ -72,7 +50,7 @@
     const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
     let line = '';
     while (line.length < lineLength - 5) {
-      let wordLength = Math.floor(Math.random() * 4) + 2;
+      let wordLength = Math.floor(Math.random() * 5) + 1; // words 1–5 letters
       let word = '';
       for (let i = 0; i < wordLength; i++) {
         word += alphabet[Math.floor(Math.random() * alphabet.length)];
@@ -97,107 +75,51 @@
         positions.push(idx);
       }
     }
-    return flat.join('');
+    return flat.join('').slice(0, lineLength); // ensure fixed length, no trailing space
   }
 
   const pages = [];
   const answers = [];
-
   for (let p = 0; p < 20; p++) {
-    let pageLines = [];
+    let pageText = [];
     let totalTargets = 0;
     for (let i = 0; i < 25; i++) {
-      let lineTargets = Math.floor(Math.random() * 2) + 1; // 1–2 A's per line
+      let lineTargets = Math.floor(Math.random() * 2) + 1;
       let line = generateFakeLine('A', lineTargets, 45);
-      pageLines.push(line);
+      pageText.push(line);
       totalTargets += lineTargets;
     }
-    const finalTotal = Math.max(8, Math.min(15, totalTargets));
+    let finalTotal = Math.max(8, Math.min(15, totalTargets));
     answers.push(finalTotal);
-    pages.push({ text: pageLines.join('\n'), lines: pageLines, answer: finalTotal });
+    pages.push({ text: pageText, answer: finalTotal });
   }
 
   const timeline = [];
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<h2>Letter Search Task</h2>
-    <p>Click on all the A's you can find in each paragraph. Click again to unselect. Then input how many A's you found.</p>
-    <p>There are 20 pages. Each page has 8 to 15 A's. Click "Start" to begin.</p>`,
+    stimulus: '<h2>Letter Search Task</h2><p>Please read the text below and find the letter "A". Total: 20 pages. Click the letters you found, then enter your count.</p>',
     choices: ['Start']
   });
 
   pages.forEach((page, index) => {
     timeline.push({
-      type: 'html-button-response',
-      stimulus: function() {
-        const container = document.createElement('div');
-        container.innerHTML = `<div><strong>Page ${index + 1}</strong></div>`;
-        const grid = document.createElement('div');
-        grid.className = 'letter-grid';
-
-        const letterStates = [];
-
-        page.lines.forEach((line, lineIdx) => {
-          for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            const span = document.createElement('span');
-            span.className = 'letter';
-            span.textContent = char;
-
-            let clicked = false;
-            span.addEventListener('click', function () {
-              clicked = !clicked;
-              if (clicked) {
-                span.classList.add(char === 'A' ? 'highlight-a' : 'highlight-non-a');
-              } else {
-                span.classList.remove('highlight-a', 'highlight-non-a');
-              }
-            });
-
-            grid.appendChild(span);
+      type: jsPsychHtmlButtonResponse,
+      stimulus: function () {
+        let html = '<div class="monofont">';
+        page.text.forEach((line, i) => {
+          html += '<div class="letter-line">';
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            const id = `char_${index}_${i}_${j}`;
+            html += `<span id="${id}" class="letter-button" onclick="toggleLetter('${id}', '${char}')">${char}</span>`;
           }
-          grid.appendChild(document.createElement('br'));
+          html += '</div>';
         });
-
-        const wrapper = document.createElement('div');
-        wrapper.appendChild(container);
-        wrapper.appendChild(grid);
-
-        const inputDiv = document.createElement('div');
-        inputDiv.className = 'input-section';
-        inputDiv.innerHTML = `
-          <label for="input_a">How many A's did you find?</label><br>
-          <input type="number" id="input_a" min="0" required />
-          <br><br>
-          <button id="submit_page">Submit Page</button>
-        `;
-        wrapper.appendChild(inputDiv);
-
-        setTimeout(() => {
-          document.getElementById('experiment').innerHTML = '';
-          document.getElementById('experiment').appendChild(wrapper);
-
-          const startTime = Date.now();
-          document.getElementById('submit_page').addEventListener('click', () => {
-            const userInput = parseInt(document.getElementById('input_a').value);
-            if (!isNaN(userInput)) {
-              const timeSpent = Math.round((Date.now() - startTime) / 1000);
-              jsPsych.finishTrial({
-                user_answer: userInput,
-                correct_answer: page.answer,
-                correct: userInput === page.answer,
-                correct_diff: Math.min(userInput, page.answer),
-                page_index: index + 1,
-                page_time_sec: timeSpent
-              });
-            } else {
-              alert("Please enter a number.");
-            }
-          });
-        }, 50);
-
-        return ''; // jsPsych expects a return even if content is added manually
+        html += `</div><br><label for="count_input_${index}">How many A's did you find?</label>`;
+        html += `<input type="number" id="count_input_${index}" /><br><br>`;
+        html += `<button onclick="submitCount(${index}, ${page.answer})">Submit</button>`;
+        return html;
       },
       choices: []
     });
@@ -207,27 +129,50 @@
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
       const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-      let html = `<h2>Results</h2><ol>`;
+      let resultHTML = '<h2>Results</h2><ol>';
       let totalCorrect = 0;
       let totalAnswer = 0;
-      let totalTime = 0;
 
-      trials.forEach(trial => {
-        totalCorrect += trial.correct_diff;
-        totalAnswer += trial.correct_answer;
-        totalTime += trial.page_time_sec;
-        html += `<li>Page ${trial.page_index}: You answered <strong>${trial.user_answer}</strong>, Actual = <strong>${trial.correct_answer}</strong> → ${trial.correct ? '✅ Correct' : '❌'}<br>
-        Time spent: ${trial.page_time_sec} sec</li>`;
+      trials.forEach(t => {
+        if (t.user_answer !== undefined) {
+          const correct = t.correct_answer;
+          const matched = Math.min(t.user_answer, correct);
+          totalCorrect += matched;
+          totalAnswer += correct;
+          resultHTML += `<li>Page ${t.page_index}: Your Answer = <strong>${t.user_answer}</strong> / Actual = <strong>${correct}</strong></li>`;
+        }
       });
 
-      html += `</ol><p><strong>Total A's Correct: ${totalCorrect} / ${totalAnswer}</strong></p>`;
-      html += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
-      return html;
+      resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
+      return resultHTML;
     },
     choices: ['Finish']
   });
 
+  function toggleLetter(id, char) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.classList.contains('letter-selected-correct') || el.classList.contains('letter-selected-wrong')) {
+      el.classList.remove('letter-selected-correct');
+      el.classList.remove('letter-selected-wrong');
+    } else {
+      if (char === 'A') {
+        el.classList.add('letter-selected-correct');
+      } else {
+        el.classList.add('letter-selected-wrong');
+      }
+    }
+  }
+
+  function submitCount(index, correct_answer) {
+    const val = parseInt(document.getElementById(`count_input_${index}`).value);
+    jsPsych.finishTrial({
+      user_answer: val,
+      correct_answer: correct_answer,
+      page_index: index + 1
+    });
+  }
+
   jsPsych.run(timeline);
 </script>
-</body>
 </html>
