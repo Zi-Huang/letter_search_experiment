@@ -13,14 +13,14 @@
       padding: 40px;
     }
     .jspsych-content {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: auto;
       font-size: 20px;
     }
     .monofont {
       font-family: monospace;
       line-height: 1.6;
-      font-size: 26px;
+      font-size: 30px;
       white-space: pre-wrap;
     }
   </style>
@@ -83,7 +83,7 @@
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>Letter Search Task</h2><p>You will read 20 pages of random text. Each page contains between 8 and 15 "A" letters. Please count them and enter your answer within 2 minutes per page.</p>',
+    stimulus: '<h2>Letter Search Task</h2><p>Please read the text below and find the letter "A".Total: 20 pages. Click the letters you found, then enter the answer..</p>',
     choices: ['Start']
   });
 
@@ -129,7 +129,7 @@
         totalCorrect += matched;
         totalAnswer += correctAns;
         totalTime += timeSpent;
-        let status = (userAns === correctAns) ? "✅ Correct" : `⚠️ ${matched}/${correctAns}`;
+        let status = (userAns === correctAns) ? "✅ Correct" : `❌`;
 
         resultHTML += `
           <li>
