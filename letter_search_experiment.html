@@ -9,18 +9,34 @@
   <link href="jspsych.css" rel="stylesheet" />
   <style>
     body {
-     Times New Roman, serif;
+      font-family: Times New Roman, serif;
       padding: 40px;
     }
     .jspsych-content {
       max-width: 1400px;
       margin: auto;
-      font-size: 20px;
+      font-size: 14px;
+    }
+    .letter-button {
+      display: inline-block;
+      padding: 4px 6px;
+      margin: 1px;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .letter-selected-correct {
+      background-color: gold;
+      color: black;
+    }
+    .letter-selected-wrong {
+      background-color: lightgray;
+      color: black;
     }
     .monofont {
-      font-family: monospace;
+      font-family: Times New Roman, serif;
       line-height: 1.6;
-      font-size: 30px;
+      font-size: 20px;
       white-space: pre-wrap;
     }
   </style>
@@ -69,28 +85,39 @@
     let pageText = [];
     let totalTargets = 0;
     for (let i = 0; i < 25; i++) {
-      let lineTargets = Math.floor(Math.random() * 2) + 1; // 1-2 A per line
+      let lineTargets = Math.floor(Math.random() * 2) + 1;
       let line = generateFakeLine('A', lineTargets, 45);
       pageText.push(line);
       totalTargets += lineTargets;
     }
     let finalTotal = Math.max(8, Math.min(15, totalTargets));
     answers.push(finalTotal);
-    pages.push({ text: pageText.join('\n'), answer: finalTotal });
+    pages.push({ text: pageText, answer: finalTotal });
   }
 
   const timeline = [];
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>Letter Search Task</h2><p>Please read the text below and find the letter "A".Total: 20 pages. Click the letters you found, then enter the answer..</p>',
+    stimulus: '<h2>Please read the text below and find the letter "A"</h2><p>Total: 20 pages. Click the letters you found, then enter the number of A's you counted.</p>',
     choices: ['Start']
   });
 
   pages.forEach((page, index) => {
     timeline.push({
       type: jsPsychSurveyText,
-      preamble: `<div class="monofont">${page.text}</div>`,
+      preamble: function() {
+        let html = '<div class="monofont">';
+        page.text.forEach((line, i) => {
+          line.split('').forEach((char, j) => {
+            const id = `char_${index}_${i}_${j}`;
+            html += `<span id="${id}" class="letter-button" onclick="toggleLetter('${id}', '${char}')">${char}</span>`;
+          });
+          html += '<br>';
+        });
+        html += '</div>';
+        return html;
+      },
       questions: [{
         prompt: `Page ${index + 1}: How many A's did you find?`,
         name: `count_${index + 1}`,
@@ -100,7 +127,7 @@
         correct_answer: page.answer,
         page_index: index + 1
       },
-      trial_duration: 120000, // 2 minutes
+      trial_duration: 120000,
       on_finish: function (data) {
         let input = parseInt(data.response[`count_${data.page_index}`]);
         data.user_answer = input;
@@ -146,6 +173,22 @@
     choices: ['Finish']
   });
 
+  function toggleLetter(id, char) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.classList.contains('letter-selected-correct') || el.classList.contains('letter-selected-wrong')) {
+      el.classList.remove('letter-selected-correct');
+      el.classList.remove('letter-selected-wrong');
+    } else {
+      if (char === 'A') {
+        el.classList.add('letter-selected-correct');
+      } else {
+        el.classList.add('letter-selected-wrong');
+      }
+    }
+  }
+
   jsPsych.run(timeline);
 </script>
 </html>
+
