@@ -3,19 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <title>Letter Search Experiment</title>
+  <!-- 載入 jsPsych 主函式庫與插件 -->
   <script src="jspsych.js"></script>
   <script src="plugin-html-button-response.js"></script>
   <script src="plugin-survey-text.js"></script>
-  <link href="jspsych.css" rel="stylesheet" />
+  <link rel="stylesheet" href="jspsych.css" />
   <style>
     body {
       font-family: Times New Roman, serif;
       padding: 40px;
+      margin: 0;
     }
     .jspsych-content {
-      max-width: 1400px;
+      max-width: 95vw;
       margin: auto;
       font-size: 14px;
+      word-wrap: break-word;
     }
     .letter-button {
       display: inline-block;
@@ -37,7 +40,11 @@
     }
     .monofont {
       font-family: Times New Roman, serif;
-      white-space: nowrap;
+      font-size: 20px;
+      overflow-x: auto;
+    }
+    .letter-line {
+      white-space: pre; /* 確保固定寬度的排版，不換行也不壓縮空白 */
     }
   </style>
 </head>
@@ -49,34 +56,25 @@
 
   function generateFakeLine(targetLetter, targetCount, lineLength = 45) {
     const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let line = '';
-    while (line.length < lineLength - 5) {
-      let wordLength = Math.floor(Math.random() * 4) + 2;
-      let word = '';
-      for (let i = 0; i < wordLength; i++) {
-        word += alphabet[Math.floor(Math.random() * alphabet.length)];
-      }
-      if (line.length + word.length + 1 <= lineLength) {
-        line += word + ' ';
-      } else {
-        break;
-      }
-    }
-    line = line.trim();
-    while (line.length < lineLength) {
-      line += alphabet[Math.floor(Math.random() * alphabet.length)];
+    let letters = [];
+
+    // 隨機產生非空白字元
+    while (letters.length < lineLength) {
+      const char = alphabet[Math.floor(Math.random() * alphabet.length)];
+      letters.push(char);
     }
 
-    let flat = line.split('');
-    let positions = [];
-    while (positions.length < targetCount) {
-      let idx = Math.floor(Math.random() * flat.length);
-      if (flat[idx] !== targetLetter && flat[idx] !== ' ') {
-        flat[idx] = targetLetter;
-        positions.push(idx);
+    // 插入 targetLetter（A）
+    let inserted = 0;
+    while (inserted < targetCount) {
+      const index = Math.floor(Math.random() * letters.length);
+      if (letters[index] !== targetLetter) {
+        letters[index] = targetLetter;
+        inserted++;
       }
     }
-    return flat.join('');
+
+    return letters.join('');
   }
 
   const pages = [];
@@ -86,11 +84,11 @@
     let totalTargets = 0;
     for (let i = 0; i < 25; i++) {
       let lineTargets = Math.floor(Math.random() * 2) + 1;
-      let line = generateFakeLine('A', lineTargets, 45);
+      const line = generateFakeLine('A', lineTargets, 45);
       pageText.push(line);
       totalTargets += lineTargets;
     }
-    let finalTotal = Math.max(8, Math.min(15, totalTargets));
+    const finalTotal = Math.max(8, Math.min(15, totalTargets));
     answers.push(finalTotal);
     pages.push({ text: pageText, answer: finalTotal });
   }
@@ -109,11 +107,12 @@
       preamble: function() {
         let html = '<div class="monofont">';
         page.text.forEach((line, i) => {
+          html += '<div class="letter-line">';
           line.split('').forEach((char, j) => {
             const id = `char_${index}_${i}_${j}`;
             html += `<span id="${id}" class="letter-button" onclick="toggleLetter('${id}', '${char}')">${char}</span>`;
           });
-          html += '<br>';
+          html += '</div>';
         });
         html += '</div>';
         return html;
@@ -129,7 +128,7 @@
       },
       trial_duration: 120000,
       on_finish: function (data) {
-        let input = parseInt(data.response[`count_${data.page_index}`]);
+        const input = parseInt(data.response[`count_${data.page_index}`]);
         data.user_answer = input;
         data.correct = (input === data.correct_answer);
         data.correct_diff = Math.min(input, data.correct_answer);
@@ -141,22 +140,22 @@
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
-      let trials = jsPsych.data.get().filter({ trial_type: 'survey-text' }).values();
+      const trials = jsPsych.data.get().filter({ trial_type: 'survey-text' }).values();
       let resultHTML = "<h2>Results</h2><ol>";
       let totalCorrect = 0;
       let totalAnswer = 0;
       let totalTime = 0;
 
       trials.forEach(trial => {
-        let page = trial.page_index;
-        let correctAns = trial.correct_answer;
-        let userAns = trial.user_answer;
-        let matched = Math.min(correctAns, userAns);
-        let timeSpent = trial.page_time_sec || 0;
+        const page = trial.page_index;
+        const correctAns = trial.correct_answer;
+        const userAns = trial.user_answer;
+        const matched = Math.min(correctAns, userAns);
+        const timeSpent = trial.page_time_sec || 0;
         totalCorrect += matched;
         totalAnswer += correctAns;
         totalTime += timeSpent;
-        let status = `${matched}/${correctAns}`;
+        const status = `${matched}/${correctAns}`;
 
         resultHTML += `
           <li>
