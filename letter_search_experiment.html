@@ -9,113 +9,135 @@
   <link href="jspsych.css" rel="stylesheet" />
   <style>
     body {
-      font-family: times new roman, sans-serif;
-      padding: 80px;
+     font-family: Arial, sans-serif;
+      padding: 40px;
     }
     .jspsych-content {
-      max-width: 800px;
+      max-width: 1000px;
       margin: auto;
+      font-size: 20px;
+    }
+    .monofont {
+      font-family: monospace;
+      line-height: 1.6;
+      font-size: 22px;
+      white-space: pre-wrap;
     }
   </style>
 </head>
 <body></body>
 <script>
-  var jsPsych = initJsPsych({
-    on_finish: function () {
-      jsPsych.data.displayData(); // 可改成 console.log(jsPsych.data.get()) 做自動紀錄
-    }
+  const jsPsych = initJsPsych({
+    on_finish: () => jsPsych.data.displayData()
   });
 
- function generateFakeLine(targetLetter, targetCount, lineLength = 40) {
-  const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let line = '';
-  while (line.length < lineLength - 5) { // 預留一點長度避免太滿
-    let wordLength = Math.floor(Math.random() * 4) + 2; // 單字 2~5 字母
-    let word = '';
-    for (let i = 0; i < wordLength; i++) {
-      word += alphabet[Math.floor(Math.random() * alphabet.length)];
+  function generateFakeLine(targetLetter, targetCount, lineLength = 45) {
+    const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let line = '';
+    while (line.length < lineLength - 5) {
+      let wordLength = Math.floor(Math.random() * 4) + 2;
+      let word = '';
+      for (let i = 0; i < wordLength; i++) {
+        word += alphabet[Math.floor(Math.random() * alphabet.length)];
+      }
+      if (line.length + word.length + 1 <= lineLength) {
+        line += word + ' ';
+      } else {
+        break;
+      }
     }
-    // 加上空格再接下一個
-    if (line.length + word.length + 1 <= lineLength) {
-      line += word + ' ';
-    } else {
-      break;
+    line = line.trim();
+    while (line.length < lineLength) {
+      line += alphabet[Math.floor(Math.random() * alphabet.length)];
     }
+
+    let flat = line.split('');
+    let positions = [];
+    while (positions.length < targetCount) {
+      let idx = Math.floor(Math.random() * flat.length);
+      if (flat[idx] !== targetLetter && flat[idx] !== ' ') {
+        flat[idx] = targetLetter;
+        positions.push(idx);
+      }
+    }
+    return flat.join('');
   }
 
-  // 移除頭尾空格 + 補齊精確長度
-  line = line.trim();
-  // 若不足 40，補字母
-  while (line.length < lineLength) {
-    line += alphabet[Math.floor(Math.random() * alphabet.length)];
-  }
-
-  let flat = line.split('');
-  let positions = [];
-  while (positions.length < targetCount) {
-    let idx = Math.floor(Math.random() * flat.length);
-    if (flat[idx] !== targetLetter && flat[idx] !== ' ') {
-      flat[idx] = targetLetter;
-      positions.push(idx);
-    }
-  }
-  return flat.join('');
-}
-
-  let pages = [];
-  let answers = [];
+  const pages = [];
+  const answers = [];
   for (let p = 0; p < 20; p++) {
     let pageText = [];
     let totalTargets = 8;
     let inserted = 0;
     for (let i = 0; i < 25; i++) {
-      let lineTargets = Math.min(2, totalTargets - inserted);
-      let line = generateFakeLine('A', lineTargets);
+      let remaining = totalTargets - inserted;
+      let lineTargets = remaining >= 2 ? Math.floor(Math.random() * 2) + 1 : remaining;
+      let line = generateFakeLine('A', lineTargets, 45);
       pageText.push(line);
       inserted += lineTargets;
     }
-    pages.push(pageText.join('<br>'));
+    pages.push(pageText.join('\n'));
     answers.push(8);
   }
 
-  let timeline = [];
+  const timeline = [];
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>請閱讀以下文章段落並找出其中的 "A" 字母</h2><p>共 20 頁，請輸入你找到的數量</p>',
+    stimulus: '<h2>請閱讀亂碼段落並找出 "A"</h2><p>共 20 頁，每頁皆藏 8 個 A，請輸入你看到的數量</p>',
     choices: ['開始']
   });
 
   pages.forEach((text, index) => {
+    let correctAnswer = answers[index];
     timeline.push({
       type: jsPsychSurveyText,
-      preamble: `<div style="font-family:monospace; line-height:1.5;">${text}</div>`,
-      questions: [
-        {
-          prompt: `第 ${index + 1} 頁：你看到幾個 A？`,
-          name: `count_${index + 1}`,
-          required: true
-        }
-      ]
+      preamble: `<div class="monofont">${text}</div>`,
+      questions: [{
+        prompt: `第 ${index + 1} 頁：你看到幾個 A？`,
+        name: `count_${index + 1}`,
+        required: true
+      }],
+      data: {
+        correct_answer: correctAnswer,
+        page_index: index + 1
+      },
+      on_finish: function (data) {
+        let input = parseInt(data.response[`count_${index + 1}`]);
+        data.user_answer = input;
+        data.correct = (input === data.correct_answer);
+      }
     });
   });
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
-      let data = jsPsych.data.get().values();
-      let correct = 0;
-      for (let i = 0; i < 20; i++) {
-        let input = data[i + 1].response[`count_${i + 1}`];
-        if (parseInt(input) === answers[i]) {
-          correct++;
-        }
-      }
-      return `<h2>實驗結束</h2><p>你答對了 ${correct} / 20 頁</p>`;
-    },
-    choices: ['顯示詳細資料']
-  });
+      let trials = jsPsych.data.get().filter({ trial_type: 'survey-text' }).values();
+      let resultHTML = "<h2>答題結果</h2><ol>";
+      let correctCount = 0;
 
+      trials.forEach(trial => {
+        let page = trial.page_index;
+        let correctAns = trial.correct_answer;
+        let userAns = trial.user_answer;
+        let isCorrect = trial.correct;
+        let status = isCorrect ? "✅ 正確" : "❌ 錯誤";
+        if (isCorrect) correctCount++;
+
+        resultHTML += `
+          <li>
+            第 ${page} 頁：實際有 <strong>${correctAns}</strong> 個 A，
+            你填了 <strong>${userAns}</strong> → ${status}
+          </li>
+        `;
+      });
+
+      resultHTML += `</ol><p><strong>總共答對 ${correctCount} / ${trials.length} 頁</strong></p>`;
+      return resultHTML;
+    },
+    choices: ['完成']
+  });
   jsPsych.run(timeline);
 </script>
 </html>
