@@ -116,7 +116,8 @@
           }
           html += '</div>';
         });
-        html += `</div><br><label for="count_input_${index}">How many A's did you find?</label>`;
+        html += `</div><br><strong>Page ${index + 1}</strong><br>`;
+        html += `<label for="count_input_${index}">How many A's did you find?</label>`;
         html += `<input type="number" id="count_input_${index}" /><br><br>`;
         html += `<button onclick="submitCount(${index}, ${page.answer})">Submit</button>`;
         return html;
