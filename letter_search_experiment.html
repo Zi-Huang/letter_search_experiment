@@ -13,14 +13,14 @@
       padding: 40px;
     }
     .jspsych-content {
-      max-width: 1000px;
+      max-width: 1200px;
       margin: auto;
       font-size: 20px;
     }
     .monofont {
       font-family: monospace;
       line-height: 1.6;
-      font-size: 22px;
+      font-size: 26px;
       white-space: pre-wrap;
     }
   </style>
@@ -129,7 +129,7 @@
         totalCorrect += matched;
         totalAnswer += correctAns;
         totalTime += timeSpent;
-        let status = (userAns === correctAns) ? "✅ Correct" : `⚠️ ${matched}/${correctAns} Correct`;
+        let status = (userAns === correctAns) ? "✅ Correct" : `⚠️ ${matched}/${correctAns}`;
 
         resultHTML += `
           <li>
@@ -139,7 +139,7 @@
         `;
       });
 
-      resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect} / ${totalAnswer}</strong></p>`;
+      resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
       resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
       return resultHTML;
     },
