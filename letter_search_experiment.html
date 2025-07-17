@@ -5,11 +5,10 @@
   <title>Letter Search Experiment</title>
   <script src="jspsych.js"></script>
   <script src="plugin-html-button-response.js"></script>
-  <script src="plugin-survey-text.js"></script>
   <link href="jspsych.css" rel="stylesheet" />
   <style>
     body {
-     Times New Roman, serif;
+      font-family: Times New Roman, serif;
       padding: 40px;
     }
     .jspsych-content {
@@ -35,11 +34,9 @@
       background-color: lightgray;
       color: black;
     }
-    .monofont {
-      font-family: monospace;
-      line-height: 1.6;
-      font-size: 30px;
-      white-space: pre-wrap;
+    .letter-line {
+      margin-bottom: 6px;
+      white-space: pre;
     }
   </style>
 </head>
@@ -53,7 +50,7 @@
     const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
     let line = '';
     while (line.length < lineLength - 5) {
-      let wordLength = Math.floor(Math.random() * 4) + 2;
+      let wordLength = Math.floor(Math.random() * 5) + 1; // words 1–5 letters
       let word = '';
       for (let i = 0; i < wordLength; i++) {
         word += alphabet[Math.floor(Math.random() * alphabet.length)];
@@ -78,7 +75,7 @@
         positions.push(idx);
       }
     }
-    return flat.join('');
+    return flat.join('').slice(0, lineLength); // ensure fixed length, no trailing space
   }
 
   const pages = [];
@@ -87,93 +84,71 @@
     let pageText = [];
     let totalTargets = 0;
     for (let i = 0; i < 25; i++) {
-      let lineTargets = Math.floor(Math.random() * 2) + 1; // 1-2 A per line
+      let lineTargets = Math.floor(Math.random() * 2) + 1;
       let line = generateFakeLine('A', lineTargets, 45);
       pageText.push(line);
       totalTargets += lineTargets;
     }
     let finalTotal = Math.max(8, Math.min(15, totalTargets));
     answers.push(finalTotal);
-    pages.push({ text: pageText.join('\n'), answer: finalTotal });
+    pages.push({ text: pageText, answer: finalTotal });
   }
 
   const timeline = [];
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>Letter Search Task</h2><p>Please read the text below and find the letter "A".Total: 20 pages. Click the letters you found, then enter the answer..</p>',
+    stimulus: '<h2>Letter Search Task</h2><p>Please read the text below and find the letter "A". Total: 20 pages. Click the letters you found, then enter your count.</p>',
     choices: ['Start']
   });
 
   pages.forEach((page, index) => {
     timeline.push({
-      type: jsPsychSurveyText,
-      preamble: function() {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: function () {
         let html = '<div class="monofont">';
         page.text.forEach((line, i) => {
-          line.split('').forEach((char, j) => {
+          html += '<div class="letter-line">';
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j];
             const id = `char_${index}_${i}_${j}`;
             html += `<span id="${id}" class="letter-button" onclick="toggleLetter('${id}', '${char}')">${char}</span>`;
-          });
-          html += '<br>';
+          }
+          html += '</div>';
         });
-        html += '</div>';
+        html += `</div><br><label for="count_input_${index}">How many A's did you find?</label>`;
+        html += `<input type="number" id="count_input_${index}" /><br><br>`;
+        html += `<button onclick="submitCount(${index}, ${page.answer})">Submit</button>`;
         return html;
       },
-      questions: [{
-        prompt: `Page ${index + 1}: How many A's did you find?`,
-        name: `count_${index + 1}`,
-        required: true
-      }],
-      data: {
-        correct_answer: page.answer,
-        page_index: index + 1
-      },
-      trial_duration: 120000, // 2 minutes
-      on_finish: function (data) {
-        let input = parseInt(data.response[`count_${data.page_index}`]);
-        data.user_answer = input;
-        data.correct = (input === data.correct_answer);
-        data.correct_diff = Math.min(input, data.correct_answer);
-        data.page_time_sec = Math.round(data.rt / 1000);
-      }
+      choices: []
     });
   });
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
-      let trials = jsPsych.data.get().filter({ trial_type: 'survey-text' }).values();
-      let resultHTML = "<h2>Results</h2><ol>";
+      const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
+      let resultHTML = '<h2>Results</h2><ol>';
       let totalCorrect = 0;
       let totalAnswer = 0;
-      let totalTime = 0;
 
-      trials.forEach(trial => {
-        let page = trial.page_index;
-        let correctAns = trial.correct_answer;
-        let userAns = trial.user_answer;
-        let matched = Math.min(correctAns, userAns);
-        let timeSpent = trial.page_time_sec || 0;
-        totalCorrect += matched;
-        totalAnswer += correctAns;
-        totalTime += timeSpent;
-        let status = (userAns === correctAns) ? "✅ Correct" : `❌`;
-
-        resultHTML += `
-          <li>
-            Page ${page}: Your Answer/Actual = <strong>${userAns}</strong>/<strong>${correctAns}</strong> → ${status}<br>
-            Time Spent: ${timeSpent} seconds
-          </li>
-        `;
+      trials.forEach(t => {
+        if (t.user_answer !== undefined) {
+          const correct = t.correct_answer;
+          const matched = Math.min(t.user_answer, correct);
+          totalCorrect += matched;
+          totalAnswer += correct;
+          resultHTML += `<li>Page ${t.page_index}: Your Answer = <strong>${t.user_answer}</strong> / Actual = <strong>${correct}</strong></li>`;
+        }
       });
 
       resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
-      resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
       return resultHTML;
     },
     choices: ['Finish']
   });
+
   function toggleLetter(id, char) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -188,6 +163,16 @@
       }
     }
   }
+
+  function submitCount(index, correct_answer) {
+    const val = parseInt(document.getElementById(`count_input_${index}`).value);
+    jsPsych.finishTrial({
+      user_answer: val,
+      correct_answer: correct_answer,
+      page_index: index + 1
+    });
+  }
+
   jsPsych.run(timeline);
 </script>
 </html>
