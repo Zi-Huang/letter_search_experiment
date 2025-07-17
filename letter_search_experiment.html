@@ -17,6 +17,24 @@
       margin: auto;
       font-size: 20px;
     }
+    .letter-button {
+      display: inline-block;
+      padding: 2px 3px;
+      margin: 0px;
+      border-radius: 2px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+    .letter-selected-correct {
+      background-color: gold;
+      color: black;
+    }
+    .letter-selected-wrong {
+      background-color: lightgray;
+      color: black;
+    }
     .monofont {
       font-family: monospace;
       line-height: 1.6;
@@ -145,6 +163,20 @@
     },
     choices: ['Finish']
   });
+  function toggleLetter(id, char) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.classList.contains('letter-selected-correct') || el.classList.contains('letter-selected-wrong')) {
+      el.classList.remove('letter-selected-correct');
+      el.classList.remove('letter-selected-wrong');
+    } else {
+      if (char === 'A') {
+        el.classList.add('letter-selected-correct');
+      } else {
+        el.classList.add('letter-selected-wrong');
+      }
+    }
+  }
 
   jsPsych.run(timeline);
 </script>
