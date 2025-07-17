@@ -81,40 +81,33 @@
   let timeline = [];
 
   timeline.push({
-    type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>請閱讀以下亂碼段落並找出其中的 "A" 字母</h2><p>共 20 頁，每頁皆藏有 8 個 A，請輸入你找到的數量</p>',
-    choices: ['開始']
-  });
+  type: jsPsychHtmlButtonResponse,
+  stimulus: function () {
+    let trials = jsPsych.data.get().filter({ trial_type: 'survey-text' }).values();
+    let resultHTML = "<h2>答題結果</h2><ol>";
+    let correctCount = 0;
 
-  pages.forEach((text, index) => {
-    timeline.push({
-      type: jsPsychSurveyText,
-      preamble: `<div style="font-family:monospace; line-height:1.5;">${text}</div>`,
-      questions: [
-        {
-          prompt: `第 ${index + 1} 頁：你看到幾個 A？`,
-          name: `count_${index + 1}`,
-          required: true
-        }
-      ]
+    trials.forEach(trial => {
+      let page = trial.page_index;
+      let correctAns = trial.correct_answer;
+      let userAns = trial.user_answer;
+      let isCorrect = trial.correct;
+      let status = isCorrect ? "✅ 正確" : "❌ 錯誤";
+      if (isCorrect) correctCount++;
+
+      resultHTML += `
+        <li>
+          第 ${page} 頁：實際有 <strong>${correctAns}</strong> 個 A，
+          你填了 <strong>${userAns}</strong> → ${status}
+        </li>
+      `;
     });
-  });
 
-  timeline.push({
-    type: jsPsychHtmlButtonResponse,
-    stimulus: function () {
-      let data = jsPsych.data.get().values();
-      let correct = 0;
-      for (let i = 0; i < 20; i++) {
-        let input = data[i + 1].response[`count_${i + 1}`];
-        if (parseInt(input) === answers[i]) {
-          correct++;
-        }
-      }
-      return `<h2>實驗結束</h2><p>你答對了 ${correct} / 20 頁</p>`;
-    },
-    choices: ['顯示詳細資料']
-  });
+    resultHTML += `</ol><p><strong>總共答對 ${correctCount} / ${trials.length} 頁</strong></p>`;
+    return resultHTML;
+  },
+  choices: ['完成']
+});
 
   jsPsych.run(timeline);
 </script>
