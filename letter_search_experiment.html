@@ -26,28 +26,41 @@
     }
   });
 
-  function generateFakeLine(targetLetter, targetCount, lineLength = 40) {
-    const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let line = [];
-    while (line.join('').length < lineLength) {
-      let wordLength = Math.floor(Math.random() * 5) + 3;
-      let word = '';
-    for (let i = 0; i < wordLength; i++){
-       word += alphabet[Math.floor(Math.random() * alphabet.length)];
+ function generateFakeLine(targetLetter, targetCount, lineLength = 40) {
+  const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let line = '';
+  while (line.length < lineLength - 5) { // 預留一點長度避免太滿
+    let wordLength = Math.floor(Math.random() * 4) + 2; // 單字 2~5 字母
+    let word = '';
+    for (let i = 0; i < wordLength; i++) {
+      word += alphabet[Math.floor(Math.random() * alphabet.length)];
     }
-      line.push(word);
+    // 加上空格再接下一個
+    if (line.length + word.length + 1 <= lineLength) {
+      line += word + ' ';
+    } else {
+      break;
     }
-    let flat = line.join(' ').split('');
-    let positions = [];
-    while (positions.length < targetCount) {
-      let idx = Math.floor(Math.random() * flat.length);
-      if (flat[idx] !== targetLetter) {
-        flat[idx] = targetLetter;
-        positions.push(idx);
-      }
-    }
-    return flat.join('');
   }
+
+  // 移除頭尾空格 + 補齊精確長度
+  line = line.trim();
+  // 若不足 40，補字母
+  while (line.length < lineLength) {
+    line += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+
+  let flat = line.split('');
+  let positions = [];
+  while (positions.length < targetCount) {
+    let idx = Math.floor(Math.random() * flat.length);
+    if (flat[idx] !== targetLetter && flat[idx] !== ' ') {
+      flat[idx] = targetLetter;
+      positions.push(idx);
+    }
+  }
+  return flat.join('');
+}
 
   let pages = [];
   let answers = [];
