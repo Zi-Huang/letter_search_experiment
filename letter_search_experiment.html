@@ -6,44 +6,22 @@
   <script src="jspsych.js"></script>
   <script src="plugin-html-button-response.js"></script>
   <script src="plugin-survey-text.js"></script>
-  <link rel="stylesheet" href="jspsych.css" />
+  <link href="jspsych.css" rel="stylesheet" />
   <style>
     body {
-      font-family: Times New Roman, serif;
-      margin: 0;
-      padding: 2vw;
-      box-sizing: border-box;
+     Times New Roman, serif;
+      padding: 40px;
     }
     .jspsych-content {
-      max-width: 100%;
+      max-width: 1400px;
       margin: auto;
-      font-size: 14px;
-    }
-    .letter-button {
-      display: inline-block;
-      padding: 2px;
-      margin: 1px 0;
-      border-radius: 2px;
-      cursor: pointer;
-      user-select: none;
       font-size: 20px;
-      line-height: 1.6;
-    }
-    .letter-selected-correct {
-      background-color: gold;
-      color: black;
-    }
-    .letter-selected-wrong {
-      background-color: lightgray;
-      color: black;
     }
     .monofont {
-      font-family: Times New Roman, serif;
-      font-size: 20px;
-      line-height: 1.8;
-    }
-    .letter-line {
-      margin-bottom: 8px;
+      font-family: monospace;
+      line-height: 1.6;
+      font-size: 30px;
+      white-space: pre-wrap;
     }
   </style>
 </head>
@@ -53,7 +31,6 @@
     on_finish: () => jsPsych.data.displayData()
   });
 
-  // 建立假文章，每行長度不固定，有隨機單字與空格
   function generateFakeLine(targetLetter, targetCount, lineLength = 45) {
     const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
     let line = '';
@@ -92,40 +69,28 @@
     let pageText = [];
     let totalTargets = 0;
     for (let i = 0; i < 25; i++) {
-      let lineTargets = Math.floor(Math.random() * 2) + 1;
-      const line = generateNaturalLine('A', lineTargets);
+      let lineTargets = Math.floor(Math.random() * 2) + 1; // 1-2 A per line
+      let line = generateFakeLine('A', lineTargets, 45);
       pageText.push(line);
       totalTargets += lineTargets;
     }
-    const finalTotal = Math.max(8, Math.min(15, totalTargets));
+    let finalTotal = Math.max(8, Math.min(15, totalTargets));
     answers.push(finalTotal);
-    pages.push({ text: pageText, answer: finalTotal });
+    pages.push({ text: pageText.join('\n'), answer: finalTotal });
   }
 
   const timeline = [];
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>Please read the text below and find the letter "A"</h2><p>Total: 20 pages. Click the letters you found, then enter the number of A\'s you counted.</p>',
+    stimulus: '<h2>Letter Search Task</h2><p>Please read the text below and find the letter "A".Total: 20 pages. Click the letters you found, then enter the answer..</p>',
     choices: ['Start']
   });
 
   pages.forEach((page, index) => {
     timeline.push({
       type: jsPsychSurveyText,
-      preamble: function () {
-        let html = '<div class="monofont">';
-        page.text.forEach((line, i) => {
-          html += '<div class="letter-line">';
-          line.split('').forEach((char, j) => {
-            const id = `char_${index}_${i}_${j}`;
-            html += `<span id="${id}" class="letter-button" onclick="toggleLetter('${id}', '${char}')">${char}</span>`;
-          });
-          html += '</div>';
-        });
-        html += '</div>';
-        return html;
-      },
+      preamble: `<div class="monofont">${page.text}</div>`,
       questions: [{
         prompt: `Page ${index + 1}: How many A's did you find?`,
         name: `count_${index + 1}`,
@@ -135,9 +100,9 @@
         correct_answer: page.answer,
         page_index: index + 1
       },
-      trial_duration: 120000,
+      trial_duration: 120000, // 2 minutes
       on_finish: function (data) {
-        const input = parseInt(data.response[`count_${data.page_index}`]);
+        let input = parseInt(data.response[`count_${data.page_index}`]);
         data.user_answer = input;
         data.correct = (input === data.correct_answer);
         data.correct_diff = Math.min(input, data.correct_answer);
@@ -149,26 +114,26 @@
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
-      const trials = jsPsych.data.get().filter({ trial_type: 'survey-text' }).values();
+      let trials = jsPsych.data.get().filter({ trial_type: 'survey-text' }).values();
       let resultHTML = "<h2>Results</h2><ol>";
       let totalCorrect = 0;
       let totalAnswer = 0;
       let totalTime = 0;
 
       trials.forEach(trial => {
-        const page = trial.page_index;
-        const correctAns = trial.correct_answer;
-        const userAns = trial.user_answer;
-        const matched = Math.min(correctAns, userAns);
-        const timeSpent = trial.page_time_sec || 0;
+        let page = trial.page_index;
+        let correctAns = trial.correct_answer;
+        let userAns = trial.user_answer;
+        let matched = Math.min(correctAns, userAns);
+        let timeSpent = trial.page_time_sec || 0;
         totalCorrect += matched;
         totalAnswer += correctAns;
         totalTime += timeSpent;
-        const status = `${matched}/${correctAns}`;
+        let status = (userAns === correctAns) ? "✅ Correct" : `❌`;
 
         resultHTML += `
           <li>
-            Page ${page}: Actual = <strong>${correctAns}</strong>, Your Answer = <strong>${userAns}</strong> → ${status}<br>
+            Page ${page}: Your Answer/Actual = <strong>${userAns}</strong>/<strong>${correctAns}</strong> → ${status}<br>
             Time Spent: ${timeSpent} seconds
           </li>
         `;
@@ -180,7 +145,6 @@
     },
     choices: ['Finish']
   });
-
   function toggleLetter(id, char) {
     const el = document.getElementById(id);
     if (!el) return;
