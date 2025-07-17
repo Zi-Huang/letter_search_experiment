@@ -36,6 +36,7 @@
     }
     .letter-line {
       margin-bottom: 6px;
+      white-space: pre;
     }
   </style>
 </head>
@@ -49,7 +50,7 @@
     const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
     let line = '';
     while (line.length < lineLength - 5) {
-      let wordLength = Math.floor(Math.random() * 4) + 2;
+      let wordLength = Math.floor(Math.random() * 5) + 1; // words 1–5 letters
       let word = '';
       for (let i = 0; i < wordLength; i++) {
         word += alphabet[Math.floor(Math.random() * alphabet.length)];
@@ -74,7 +75,7 @@
         positions.push(idx);
       }
     }
-    return flat.join('');
+    return flat.join('').slice(0, lineLength); // ensure fixed length, no trailing space
   }
 
   const pages = [];
@@ -108,10 +109,11 @@
         let html = '<div class="monofont">';
         page.text.forEach((line, i) => {
           html += '<div class="letter-line">';
-          line.split('').forEach((char, j) => {
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j];
             const id = `char_${index}_${i}_${j}`;
             html += `<span id="${id}" class="letter-button" onclick="toggleLetter('${id}', '${char}')">${char}</span>`;
-          });
+          }
           html += '</div>';
         });
         html += `</div><br><label for="count_input_${index}">How many A's did you find?</label>`;
