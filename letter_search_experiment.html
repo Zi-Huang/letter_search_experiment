@@ -8,7 +8,7 @@
   <link href="jspsych.css" rel="stylesheet" />
   <style>
     body {
-      font-family: Times New Roman, serif;
+      font-family: "Times New Roman", Times, serif;
       padding: 40px;
     }
     .jspsych-content {
@@ -47,37 +47,37 @@
   });
 
   function generateFakeLine(targetLetter, targetCount, lineLength = 45) {
-    const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let line = '';
-    while (line.length < lineLength - 5) {
-      let wordLength = Math.floor(Math.random() * 5) + 1; // words 1–5 letters
-      let word = '';
-      for (let i = 0; i < wordLength; i++) {
-        word += alphabet[Math.floor(Math.random() * alphabet.length)];
-      }
-      if (line.length + word.length + 1 <= lineLength) {
-        line += word + ' ';
-      } else {
-        break;
-      }
-    }
-    line = line.trim();
-    while (line.length < lineLength) {
-      line += alphabet[Math.floor(Math.random() * alphabet.length)];
-    }
+  const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let lineChars = [];
 
-    let flat = line.split('');
-    let positions = [];
-    while (positions.length < targetCount) {
-      let idx = Math.floor(Math.random() * flat.length);
-      if (flat[idx] !== targetLetter && flat[idx] !== ' ') {
-        flat[idx] = targetLetter;
-        positions.push(idx);
-      }
+  while (lineChars.length < lineLength) {
+    if (Math.random() < 0.15 && lineChars.length !== 0 && lineChars.length < lineLength - 1) {
+      lineChars.push(' ');
+    } else {
+      lineChars.push(alphabet[Math.floor(Math.random() * alphabet.length)]);
     }
-    return flat.join('').slice(0, lineLength); // ensure fixed length, no trailing space
   }
 
+  // 替換隨機非空格為 A
+  let positions = [];
+  while (positions.length < targetCount) {
+    let idx = Math.floor(Math.random() * lineChars.length);
+    if (lineChars[idx] !== targetLetter && lineChars[idx] !== ' ') {
+      lineChars[idx] = targetLetter;
+      positions.push(idx);
+    }
+  }
+
+  // 移除開頭或結尾空格（保證長度不變）
+  if (lineChars[0] === ' ') {
+    lineChars[0] = alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  if (lineChars[lineLength - 1] === ' ') {
+    lineChars[lineLength - 1] = alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+
+  return lineChars.join('');
+}
   const pages = [];
   const answers = [];
   for (let p = 0; p < 20; p++) {
