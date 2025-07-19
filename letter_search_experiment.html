@@ -143,6 +143,7 @@
         data.correct_diff = Math.min(correctCount, page.answer); // 答對數（不超過正解數）
         data.page_index = index + 1;
         data.page_time_sec = Math.round(data.rt / 1000); // 該頁花費時間（秒）
+        data.page_accuracy = ((data.correct_diff / data.correct_answer) * 100).toFixed(1); // 每頁正確率
       }
     });
   });
@@ -164,16 +165,17 @@
           totalCorrect += matched;
           totalAnswer += t.correct_answer;
           totalTime += t.page_time_sec || 0;
-          resultHTML += `<li>Page ${t.page_index}: You selected <strong>${t.user_answer}</strong> / Actual = <strong>${t.correct_answer}</strong><br>Time spent: ${t.page_time_sec} sec</li>`;
+          const pageAccuracy = ((matched / t.correct_answer) * 100).toFixed(1);
+          resultHTML += `<li>Page ${t.page_index}: You selected <strong>${t.user_answer}</strong> / Actual = <strong>${t.correct_answer}</strong> → Accuracy: ${pageAccuracy}%<br>Time spent: ${t.page_time_sec} sec</li>`;
         }
       });
 
-      const accuracy = ((totalCorrect / totalAnswer) * 100).toFixed(1); // 計算正確率
+      const overallAccuracy = ((totalCorrect / totalAnswer) * 100).toFixed(1); // 總正確率
 
       // 顯示總結果
       resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
       resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
-      resultHTML += `<p><strong>Accuracy: ${accuracy}%</strong></p>`;
+      resultHTML += `<p><strong>Overall Accuracy: ${overallAccuracy}%</strong></p>`;
       return resultHTML;
     },
     choices: ['Finish']
