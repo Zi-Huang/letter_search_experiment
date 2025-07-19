@@ -1,44 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html> <!-- 宣告 HTML5 文件類型 -->
+<html lang="en"> <!-- 設定語言為英文 -->
 <head>
-  <meta charset="UTF-8" />
-  <title>Letter Search Experiment</title>
-  <script src="jspsych.js"></script>
-  <script src="plugin-html-button-response.js"></script>
-  <link href="jspsych.css" rel="stylesheet" />
+  <meta charset="UTF-8" /> <!-- 設定字元編碼 -->
+  <title>Letter Search Experiment</title> <!-- 網頁標題 -->
+  <script src="jspsych.js"></script> <!-- 載入 jsPsych 核心腳本 -->
+  <script src="plugin-html-button-response.js"></script> <!-- 載入 html-button-response 插件 -->
+  <link href="jspsych.css" rel="stylesheet" /> <!-- 載入 jsPsych 樣式表 -->
   <style>
     body {
-      font-family: "Times New Roman", Times, serif;
-      padding: 40px;
+      font-family: "Times New Roman", Times, serif; /* 設定字體為 Times New Roman */
+      padding: 40px; /* 頁面留白 */
     }
     .jspsych-content {
-      max-width: 1400px;
-      margin: auto;
-      font-size: 20px;
+      max-width: 1400px; /* 中央內容最大寬度 */
+      margin: auto; /* 置中 */
+      font-size: 20px; /* 文字大小 */
     }
     .letter-button {
-      font-family: monospace;
+      font-family: monospace; /* 等寬字體確保對齊 */
       display: inline-block;
-      width: 20px;
+      width: 20px; /* 固定寬度以確保字元整齊 */
       text-align: center;
       padding: 0px;
       margin: 0px;
       line-height: 1.2;
-      border-radius: 2px;
+      border-radius: 2px; /* 小圓角 */
       cursor: pointer;
-      user-select: none;
+      user-select: none; /* 禁止文字選取 */
     }
     .letter-selected-correct {
-      background-color: gold;
+      background-color: gold; /* 點選 A 顯示黃色背景 */
       color: black;
     }
     .letter-selected-wrong {
-      background-color: lightgray;
+      background-color: lightgray; /* 點錯顯示灰色背景 */
       color: black;
     }
     .letter-line {
       margin-bottom: 6px;
-      white-space: pre;
+      white-space: pre; /* 保留空格與排版 */
     }
     .monofont {
       font-family: monospace;
@@ -47,7 +47,7 @@
     }
   </style>
 </head>
-<body></body>
+<body></body> <!-- 空的 body，jsPsych 會自動插入內容 -->
 <script>
   const jsPsych = initJsPsych({
     on_finish: () => jsPsych.data.displayData()
@@ -93,13 +93,13 @@
     }
 
     const count = Object.values(A_locations).reduce((acc, arr) => acc + arr.length, 0);
-    return { lines: lines, answer: count };
+    return { lines: lines, answer: count, locations: A_locations };
   }
 
   const pages = [];
   for (let p = 0; p < 20; p++) {
     const result = generatePageText('A');
-    pages.push({ text: result.lines, answer: result.answer });
+    pages.push({ text: result.lines, answer: result.answer, locations: result.locations });
   }
 
   const timeline = [];
@@ -120,7 +120,7 @@
           for (let j = 0; j < line.length; j++) {
             const char = line[j];
             const id = `char_${index}_${i}_${j}`;
-            html += `<span id="${id}" class="letter-button" onclick="toggleLetter('${id}', '${char}')">${char}</span>`;
+            html += `<span id="${id}" class="letter-button" data-line="${i}" data-pos="${j}" data-char="${char}" onclick="toggleLetter(this)">${char}</span>`;
           }
           html += '</div>';
         });
@@ -128,13 +128,18 @@
         return html;
       },
       choices: ['Continue'],
-      trial_duration: 120000, // 兩分鐘限時
+      trial_duration: 120000,
       on_finish: function (data) {
-        const selected = Array.from(document.querySelectorAll('.letter-selected-correct')).length;
-        data.user_answer = selected;
+        let correctCount = 0;
+        document.querySelectorAll('.letter-selected-correct').forEach(el => {
+          if (el.dataset.char === 'A') {
+            correctCount++;
+          }
+        });
+        data.user_answer = correctCount;
         data.correct_answer = page.answer;
-        data.correct = (selected === page.answer);
-        data.correct_diff = Math.min(selected, page.answer);
+        data.correct = (correctCount === page.answer);
+        data.correct_diff = Math.min(correctCount, page.answer);
         data.page_index = index + 1;
         data.page_time_sec = Math.round(data.rt / 1000);
       }
@@ -167,9 +172,8 @@
     choices: ['Finish']
   });
 
-  function toggleLetter(id, char) {
-    const el = document.getElementById(id);
-    if (!el) return;
+  function toggleLetter(el) {
+    const char = el.dataset.char;
     if (el.classList.contains('letter-selected-correct') || el.classList.contains('letter-selected-wrong')) {
       el.classList.remove('letter-selected-correct');
       el.classList.remove('letter-selected-wrong');
