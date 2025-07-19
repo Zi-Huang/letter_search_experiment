@@ -15,9 +15,11 @@
       max-width: 1400px; /* 中央內容最大寬度 */
       margin: auto; /* 置中 */
       font-size: 20px; /* 文字大小 */
+      white-space: normal; /* ✅ 允許內容換行 */
+      word-wrap: break-word; /* ✅ 長單字可換行 */
     }
     .letter-button {
-      font-family: Times New Roman; /* 等寬字體確保對齊 */
+      font-family: monospace; /* 等寬字體確保對齊 */
       display: inline-block;
       width: 20px; /* 固定寬度以確保字元整齊 */
       text-align: center;
@@ -37,7 +39,7 @@
       white-space: pre; /* 保留空格與排版 */
     }
     .monofont {
-      font-family: Times New Roman; /* 等寬字型確保字元對齊 */
+      font-family: monospace; /* 等寬字型確保字元對齊 */
       font-size: 20px; /* 字體大小 */
       white-space: pre; /* 保留空格 */
     }
@@ -107,10 +109,10 @@
 
   const timeline = []; // 儲存實驗流程
 
-  // 首頁簡介
+  // 首頁簡介（在 "You have" 處換行）
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>Letter Search Task</h2><p>Please read the text below and find the letter "A". Total: 20 pages. Click the letters you found. Click all letters "A" you find. You have 2 minutes per page. Click "Continue" to go to the next page.</p>',
+    stimulus: '<h2>Letter Search Task</h2><p>You will see 20 pages of fake text. Click all letters "A" you find.<br>You have 2 minutes per page. Click "Continue" to go to the next page.</p>',
     choices: ['Start']
   });
 
@@ -130,7 +132,7 @@
           }
           html += '</div>'; // 結束每行
         });
-        html += `</div><br><strong>Page ${index + 1}</strong>`;
+        html += `<br><strong>Page ${index + 1}</strong>`; // 顯示頁碼
         return html;
       },
       choices: ['Continue'], // 使用者需按下 Continue
@@ -166,16 +168,16 @@
           totalAnswer += t.correct_answer;
           totalTime += t.page_time_sec || 0;
           const pageAccuracy = ((matched / t.correct_answer) * 100).toFixed(1);
-          resultHTML += `<li>Page ${t.page_index}: You selected <strong>${t.user_answer}</strong> / Actual = <strong>${t.correct_answer}</strong> → Accuracy:  <strong>${pageAccuracy}%<br><strong> Time spent: ${t.page_time_sec} sec</li>`;
+          resultHTML += `<li>Page ${t.page_index}: You selected <strong>${t.user_answer}</strong> / Actual = <strong>${t.correct_answer}</strong> → Accuracy: <strong>${pageAccuracy}%</strong><br>Time spent: ${t.page_time_sec} sec</li>`;
         }
       });
 
       const overallAccuracy = ((totalCorrect / totalAnswer) * 100).toFixed(1); // 總正確率
 
-      // 顯示總結果
+      // 顯示總結果（正確率加粗）
       resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
       resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
-      resultHTML += `<p><strong>Overall Accuracy: ${overallAccuracy}%</strong></p>`;
+      resultHTML += `<p><strong>Overall Accuracy: <strong>${overallAccuracy}%</strong></strong></p>`;
       return resultHTML;
     },
     choices: ['Finish']
