@@ -17,7 +17,7 @@
       font-size: 20px; /* 文字大小 */
     }
     .letter-button {
-      font-family: monospace; /* 等寬字體確保對齊 */
+      font-family: Times New Roman; /* 等寬字體確保對齊 */
       display: inline-block;
       width: 20px; /* 固定寬度以確保字元整齊 */
       text-align: center;
@@ -37,7 +37,7 @@
       white-space: pre; /* 保留空格與排版 */
     }
     .monofont {
-      font-family: monospace; /* 等寬字型確保字元對齊 */
+      font-family: Times New Roman; /* 等寬字型確保字元對齊 */
       font-size: 20px; /* 字體大小 */
       white-space: pre; /* 保留空格 */
     }
@@ -110,7 +110,7 @@
   // 首頁簡介
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>Letter Search Task</h2><p>You will see 20 pages of fake text. Click all letters "A" you find. You have 2 minutes per page. Click "Continue" to go to the next page.</p>',
+    stimulus: '<h2>Letter Search Task</h2><p>Please read the text below and find the letter "A". Total: 20 pages. Click the letters you found. Click all letters "A" you find. You have 2 minutes per page. Click "Continue" to go to the next page.</p>',
     choices: ['Start']
   });
 
@@ -166,7 +166,7 @@
           totalAnswer += t.correct_answer;
           totalTime += t.page_time_sec || 0;
           const pageAccuracy = ((matched / t.correct_answer) * 100).toFixed(1);
-          resultHTML += `<li>Page ${t.page_index}: You selected <strong>${t.user_answer}</strong> / Actual = <strong>${t.correct_answer}</strong> → Accuracy: ${pageAccuracy}%<br>Time spent: ${t.page_time_sec} sec</li>`;
+          resultHTML += `<li>Page ${t.page_index}: You selected <strong>${t.user_answer}</strong> / Actual = <strong>${t.correct_answer}</strong> → Accuracy:  <strong>${pageAccuracy}%<br><strong> Time spent: ${t.page_time_sec} sec</li>`;
         }
       });
 
