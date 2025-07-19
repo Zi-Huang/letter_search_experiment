@@ -49,17 +49,17 @@
     on_finish: () => jsPsych.data.displayData() // 結束後顯示資料
   });
 
-  // 儲存使用者點擊 A 的 ID
-  const clickedASet = new Set();
+  const clickedASet = new Set(); // 儲存使用者點擊 A 的 ID
 
   // 生成一頁假文章，包含 0~2 個 A/行，總數在 8~15
   function generatePageText(targetLetter = 'A') {
     const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lines = Array(25).fill('');
-    const lineLength = 45;
-    let totalTargets = Math.floor(Math.random() * 8) + 8; // 總共隨機 8~15 個 A
-    const A_locations = {};
+    const lines = Array(25).fill(''); // 一頁 25 行
+    const lineLength = 45; // 每行 45 字
+    let totalTargets = Math.floor(Math.random() * 8) + 8; // 隨機產生 8~15 個 A
+    const A_locations = {}; // 紀錄 A 所在位置
 
+    // 隨機分配 A 到不同行與位置
     while (totalTargets > 0) {
       const lineIdx = Math.floor(Math.random() * 25);
       if (!A_locations[lineIdx]) A_locations[lineIdx] = [];
@@ -73,74 +73,81 @@
       }
     }
 
+    // 產生每行文字內容
     for (let i = 0; i < 25; i++) {
       const charArray = [];
       for (let j = 0; j < lineLength; j++) {
         if (A_locations[i] && A_locations[i].includes(j)) {
-          charArray.push(targetLetter);
+          charArray.push(targetLetter); // 插入 A
         } else {
           if (j > 0 && j < lineLength - 1 && Math.random() < 0.15) {
-            charArray.push(' ');
+            charArray.push(' '); // 隨機加入空格
           } else {
-            charArray.push(alphabet[Math.floor(Math.random() * alphabet.length)]);
+            charArray.push(alphabet[Math.floor(Math.random() * alphabet.length)]); // 插入隨機字母
           }
         }
       }
+      // 修正首尾不為空格
       if (charArray[0] === ' ') charArray[0] = alphabet[Math.floor(Math.random() * alphabet.length)];
       if (charArray[lineLength - 1] === ' ') charArray[lineLength - 1] = alphabet[Math.floor(Math.random() * alphabet.length)];
       lines[i] = charArray.join('');
     }
 
+    // 回傳該頁文字與 A 的數量
     const count = Object.values(A_locations).reduce((acc, arr) => acc + arr.length, 0);
     return { lines: lines, answer: count, locations: A_locations };
   }
 
+  // 建立所有頁面內容
   const pages = [];
   for (let p = 0; p < 20; p++) {
     const result = generatePageText('A');
     pages.push({ text: result.lines, answer: result.answer, locations: result.locations });
   }
 
-  const timeline = [];
+  const timeline = []; // 儲存實驗流程
 
+  // 首頁簡介
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: '<h2>Letter Search Task</h2><p>You will see 20 pages of fake text. Click all letters "A" you find. You have 2 minutes per page. Click "Continue" to go to the next page.</p>',
     choices: ['Start']
   });
 
+  // 每一頁文章與互動
   pages.forEach((page, index) => {
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: function () {
-        clickedASet.clear();
+        clickedASet.clear(); // 每頁初始化點擊紀錄
         let html = '<div class="monofont">';
         page.text.forEach((line, i) => {
           html += '<div class="letter-line">';
           for (let j = 0; j < line.length; j++) {
             const char = line[j];
-            const id = `char_${index}_${i}_${j}`;
+            const id = `char_${index}_${i}_${j}`; // 每個字母一個唯一 ID
             html += `<span id="${id}" class="letter-button" data-char="${char}" onclick="toggleLetter('${id}', '${char}')">${char}</span>`;
           }
-          html += '</div>';
+          html += '</div>'; // 結束每行
         });
         html += `</div><br><strong>Page ${index + 1}</strong>`;
         return html;
       },
-      choices: ['Continue'],
-      trial_duration: 120000,
+      choices: ['Continue'], // 使用者需按下 Continue
+      trial_duration: 120000, // 每頁最長 2 分鐘
       on_finish: function (data) {
-        let correctCount = clickedASet.size;
-        data.user_answer = correctCount;
-        data.correct_answer = page.answer;
+        let correctCount = clickedASet.size; // 使用者點擊 A 的數量
+        data.user_answer = correctCount; // 實際點擊數
+        data.correct_answer = page.answer; // 正確 A 數量
         data.correct = (correctCount === page.answer);
-        data.correct_diff = Math.min(correctCount, page.answer);
+        data.correct_diff = Math.min(correctCount, page.answer); // 答對數（不超過正解數）
         data.page_index = index + 1;
-        data.page_time_sec = Math.round(data.rt / 1000);
+        data.page_time_sec = Math.round(data.rt / 1000); // 該頁花費時間（秒）
       }
     });
   });
 
+  // 結果頁
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
@@ -150,6 +157,7 @@
       let totalAnswer = 0;
       let totalTime = 0;
 
+      // 每頁統計
       trials.forEach(t => {
         if (t.page_index) {
           const matched = Math.min(t.user_answer, t.correct_answer);
@@ -160,27 +168,32 @@
         }
       });
 
+      const accuracy = ((totalCorrect / totalAnswer) * 100).toFixed(1); // 計算正確率
+
+      // 顯示總結果
       resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
       resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
+      resultHTML += `<p><strong>Accuracy: ${accuracy}%</strong></p>`;
       return resultHTML;
     },
     choices: ['Finish']
   });
 
+  // 點擊函式
   function toggleLetter(id, char) {
     const el = document.getElementById(id);
     if (!el) return;
     if (el.classList.contains('letter-selected-correct')) {
-      el.classList.remove('letter-selected-correct');
-      clickedASet.delete(id);
+      el.classList.remove('letter-selected-correct'); // 取消標記
+      clickedASet.delete(id); // 移除記錄
     } else {
       if (char === 'A') {
-        el.classList.add('letter-selected-correct');
-        clickedASet.add(id);
+        el.classList.add('letter-selected-correct'); // 標記 A 為正確
+        clickedASet.add(id); // 記錄這個 A 被點了
       }
     }
   }
 
-  jsPsych.run(timeline);
+  jsPsych.run(timeline); // 執行實驗流程
 </script>
 </html>
