@@ -47,21 +47,8 @@
 </head>
 <body></body> <!-- 空的 body，由 jsPsych 動態填入內容 -->
 <script>
-  // 初始化 jsPsych 並設定實驗結束時自動下載 CSV 檔案
   const jsPsych = initJsPsych({
-    on_finish: () => {
-      const filename = `letter_search_${Date.now()}.csv`; // 檔名加時間戳
-      const csv = jsPsych.data.get().csv(); // 將資料轉為 CSV
-      const blob = new Blob([csv], { type: 'text/csv' }); // 建立檔案 Blob
-      const url = URL.createObjectURL(blob); // 建立下載連結
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click(); // 觸發下載
-      document.body.removeChild(a); // 移除元素
-      URL.revokeObjectURL(url); // 釋放資源
-    }
+    on_finish: () => jsPsych.data.displayData() // 結束後顯示資料
   });
 
   const clickedASet = new Set(); // 儲存使用者點擊 A 的 ID
@@ -125,8 +112,7 @@
   // 首頁簡介（在 "You have" 處換行）
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>Letter Search Task</h2>
-        <p>You will see 20 pages of fake text. Click all letters "A" you find.<br>You have 2 minutes per page. Click "Continue" to go to the next page.</p>',
+    stimulus: '<h2>Letter Search Task</h2><p>You will see 20 pages of fake text. Click all letters "A" you find.<br>You have 2 minutes per page. Click "Continue" to go to the next page.</p>',
     choices: ['Start']
   });
 
