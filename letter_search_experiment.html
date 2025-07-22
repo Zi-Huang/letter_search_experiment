@@ -47,7 +47,9 @@
   <div id="result-container"></div> <!-- 顯示結果與下載按鈕的容器 -->
 </body>
 <script>
-  const jsPsych = initJsPsych();
+  const jsPsych = initJsPsych({
+    on_finish: () => jsPsych.data.displayData() // 結束後顯示資料
+  });
   const clickedASet = new Set();
 
   // 設定整份實驗中總共要出現的 A 數（不改變總數）
