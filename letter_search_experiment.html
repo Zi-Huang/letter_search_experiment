@@ -48,8 +48,21 @@
 <body></body> <!-- 空的 body，由 jsPsych 動態填入內容 -->
 <script>
   const jsPsych = initJsPsych({
-    on_finish: () => jsPsych.data.displayData() // 結束後顯示資料
-  });
+  on_finish: () => {
+    const filename = `letter_search_${Date.now()}.csv`; // 檔名加上時間戳記
+    const csv = jsPsych.data.get().csv(); // 取得資料 CSV 格式
+    const blob = new Blob([csv], { type: 'text/csv' }); // 建立檔案物件
+    const url = URL.createObjectURL(blob); // 建立 URL
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename; // 檔案命名
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a); // 清除元素
+    URL.revokeObjectURL(url); // 釋放 URL
+  }
+});
 
   const clickedASet = new Set(); // 儲存使用者點擊 A 的 ID
 
