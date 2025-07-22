@@ -44,23 +44,35 @@
   </style>
 </head>
 <body>
-  <!-- 顯示結果與下載按鈕的容器 -->
-  <div id="result-container"></div>
-</body> <!-- 空的 body，由 jsPsych 動態填入內容 -->
+  <div id="result-container"></div> <!-- 顯示結果與下載按鈕的容器 -->
+</body>
 <script>
-  // 初始化 jsPsych
   const jsPsych = initJsPsych();
+  const clickedASet = new Set();
 
-  const clickedASet = new Set(); // 儲存使用者點擊 A 的 ID
+  // 設定整份實驗中總共要出現的 A 數（不改變總數）
+  const totalTargetAs = 240;
+  const pages = [];
+  const pageTargets = [];
+  let remaining = totalTargetAs;
 
-  // 生成一頁假文章，包含 0~2 個 A/行，總數在 8~15
-  function generatePageText(targetLetter = 'A') {
-    const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lines = Array(25).fill(''); // 一頁 25 行
-    const lineLength = 45; // 每行 45 字
-    let totalTargets = Math.floor(Math.random() * 8) + 8; // 隨機產生 8~15 個 A
-    const A_locations = {}; // 紀錄 A 所在位置
+  // 每頁隨機 8~15 個 A，總和控制為 totalTargetAs
+  for (let i = 0; i < 20; i++) {
+    let min = Math.max(8, remaining - (15 * (19 - i))); // 保證之後能湊到總和
+    let max = Math.min(15, remaining - (8 * (19 - i))); // 保證之後不會超過總和
+    const val = Math.floor(Math.random() * (max - min + 1)) + min;
+    pageTargets.push(val);
+    remaining -= val;
+  }
 
+  // 產生單一頁面文字內容與 A 分布
+  function generatePageText(targetLetter = 'A', totalTargets = 12) {
+    const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ'; // 不含 A 的字母
+    const lines = Array(25).fill(''); // 初始化 25 行空文字
+    const lineLength = 45; // 每行 45 個字元
+    const A_locations = {}; // 儲存 A 的位置索引
+
+    // 隨機在 25 行中分配 A，每行最多 2 個
     while (totalTargets > 0) {
       const lineIdx = Math.floor(Math.random() * 25);
       if (!A_locations[lineIdx]) A_locations[lineIdx] = [];
@@ -74,38 +86,39 @@
       }
     }
 
+    // 為每一行產生內容
     for (let i = 0; i < 25; i++) {
       const charArray = [];
       for (let j = 0; j < lineLength; j++) {
         if (A_locations[i] && A_locations[i].includes(j)) {
-          charArray.push(targetLetter);
+          charArray.push(targetLetter); // 插入 A
         } else {
           if (j > 0 && j < lineLength - 1 && Math.random() < 0.15) {
-            charArray.push(' ');
+            charArray.push(' '); // 插入空格
           } else {
-            charArray.push(alphabet[Math.floor(Math.random() * alphabet.length)]);
+            charArray.push(alphabet[Math.floor(Math.random() * alphabet.length)]); // 插入隨機字母
           }
         }
       }
+      // 頭尾不留空格
       if (charArray[0] === ' ') charArray[0] = alphabet[Math.floor(Math.random() * alphabet.length)];
       if (charArray[lineLength - 1] === ' ') charArray[lineLength - 1] = alphabet[Math.floor(Math.random() * alphabet.length)];
       lines[i] = charArray.join('');
     }
 
-    const count = Object.values(A_locations).reduce((acc, arr) => acc + arr.length, 0);
+    const count = Object.values(A_locations).reduce((acc, arr) => acc + arr.length, 0); // 總 A 數確認
     return { lines: lines, answer: count, locations: A_locations };
   }
 
-  // 建立所有頁面內容
-  const pages = [];
+  // 根據每頁指定的 A 數產生頁面內容
   for (let p = 0; p < 20; p++) {
-    const result = generatePageText('A');
+    const result = generatePageText('A', pageTargets[p]);
     pages.push({ text: result.lines, answer: result.answer, locations: result.locations });
   }
 
-  const timeline = []; // 儲存實驗流程
+  // 以下流程維持不變
+  const timeline = [];
 
-  // 首頁簡介區塊
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -119,7 +132,6 @@
     choices: ['Start']
   });
 
-  // 每一頁文章與互動
   pages.forEach((page, index) => {
     timeline.push({
       type: jsPsychHtmlButtonResponse,
@@ -139,7 +151,7 @@
         return html;
       },
       choices: ['Continue'],
-      trial_duration: 120000, // 兩分鐘限制
+      trial_duration: 120000,
       on_finish: function (data) {
         let correctCount = clickedASet.size;
         data.user_answer = correctCount;
@@ -153,7 +165,6 @@
     });
   });
 
-  // 結果頁
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
@@ -194,7 +205,6 @@
     choices: ['Finish']
   });
 
-  // 點擊 A 的處理
   function toggleLetter(id, char) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -209,7 +219,6 @@
     }
   }
 
-  // 匯出 CSV 檔案
   function downloadCSV() {
     const rows = window.summaryData;
     if (!rows || rows.length === 0) return;
@@ -229,7 +238,6 @@
     URL.revokeObjectURL(url);
   }
 
-  // 執行實驗流程
   jsPsych.run(timeline);
 </script>
 </html>
