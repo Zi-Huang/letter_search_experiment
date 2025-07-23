@@ -12,12 +12,14 @@
       margin: 0;
       padding: 0px;
       overflow-x: hidden; /* ✅ 防止畫面橫向捲動 */
-      
+      box-sizing: border-box; /* 保證 padding 不會超出寬度限制 */
     }
     body {
       font-family: "Times New Roman", Times, serif; /* 設定字體為 Times New Roman */
       padding: 40px; /* 頁面留白 */
       margin: 0 auto;
+      max-width: 90vw; 
+      padding: 4vw;
     }
     .jspsych-content {
       max-width: 1400px; /* 中央內容最大寬度 */
@@ -137,7 +139,7 @@
       </h2>
       <p>
         You will see 20 pages of fake text. Click all letters "A" you find.<br>
-        You have 2 minutes per page. Click "Continue" to go to the next page.
+        Click "Continue" to go to the next page.
       </p>`,
     choices: ['Start']
   });
