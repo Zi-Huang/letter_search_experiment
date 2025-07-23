@@ -165,11 +165,12 @@
           }
           html += '</div>';
         });
-          html += `
-          <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-top: 20px;">
+        html += `</div>`;
+        html += `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-top: 20px;">
           <strong>Page ${index + 1}</strong>
           <button id="continue-button" onclick="jsPsych.finishTrial()">Continue</button>
-          </div>`;
+        </div>`;
         return html;
       },
       
