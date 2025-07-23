@@ -19,9 +19,14 @@
       padding: 60px; /* 頁面留白 */
       max-width: 1400px ;
       margin: 0 auto;
+      display: flex; /* 使用 flex 排版 */
+      flex-direction: column; /* 垂直排列子元素 */
+      align-items: center; /* 子元素水平置中 */
+      padding: 2vh 0; /* 上下留白 2% 高度 */
     }
     .jspsych-content {
-      max-width: 1200px; /* 中央內容最大寬度 */
+      max-width: 1000px; /* 最大寬度避免滿版 */
+      width: 90%; /* 寬度為螢幕 90% */
       margin: auto; /* 置中 */
       font-size: 20px; /* 文字大小 */
     }
