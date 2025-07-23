@@ -51,6 +51,10 @@
       font-family: monospace; /* 等寬字型確保字元對齊 */
       font-size: 20px; /* 字體大小 */
       white-space: pre; /* 保留空格 */
+      display: inline-block; /* 讓整塊文字可以調整寬度 */
+      max-width: 1000px;  /* ✅ 限制最大寬度，不會超過畫面 */
+      width: 100%;  /* ✅ 根據裝置寬度縮放 */
+      overflow-x: hidden;                
     }
   </style>
 </head>
