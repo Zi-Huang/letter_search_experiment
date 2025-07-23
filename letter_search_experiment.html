@@ -8,15 +8,19 @@
   <link href="jspsych.css" rel="stylesheet" /> <!-- 載入 jsPsych 樣式表 -->
   <style>
     body {
-      font-family: "Times New Roman", Times, serif; /* 設定字體為 Times New Roman */
-      padding: 50px; /* 頁面留白 */
-      max-width: 1200px;    /* 限制整體最大寬度 */
-      margin: 0 auto;       /* 自動置中 body 區塊 */
+      font-family: "Times New Roman", Times, serif;
+      margin: 0 auto;                  /* 水平置中 */
+      padding: 40px 20px;              /* 上下左右留白 */
+      max-width: 90vw;                 /* 最大寬度為螢幕寬度的 90%，不滿版 */
+      width: 100%;
+      box-sizing: border-box;          /* 包含 padding，不會撐出容器 */
     }
+
     .jspsych-content {
-      max-width: 1100px; /* 中央內容最大寬度 */
-      margin: auto; /* 置中 */
-      font-size: 20px; /* 文字大小 */
+      max-width: 90vw;                 /* 與 body 同樣寬度 */
+      width: 100%;
+      margin: auto;
+      font-size: 20px;
     }
     .letter-button {
       font-family: monospace; /* 等寬字體確保對齊 */
