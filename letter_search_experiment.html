@@ -256,9 +256,8 @@ function downloadCSV() {
 
 
     if (totals) {
-      csv += `\n\nTotal Correct,${totals.totalCorrect}/${totals.totalAnswer}`;
-      csv += `\nTotal Time (sec),${totals.totalTime}`;
-      csv += `\nOverall Accuracy,${totals.overallAccuracy}%`;
+      // ✅ 加入總結資料
+    csv += `\nTotal,${totals.totalAnswer},${totals.totalCorrect},${totals.totalTime},${totals.overallAccuracy}%`;
     }
 
     const blob = new Blob([csv], { type: 'text/csv' });
