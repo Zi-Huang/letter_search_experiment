@@ -135,8 +135,8 @@
       choices: ['Next'],
       trial_duration: 90000,
       on_start: function (trial) {
-        trial.data = { startTime: performance.now() };
-      },
+        trial.data.startTime = performance.now(); /* ✅ 紀錄開始時間（不覆蓋整體 data） */
+      }
       on_finish: function (data) {
         const correctCount = clickedASet.size;
         const endTime = performance.now();
