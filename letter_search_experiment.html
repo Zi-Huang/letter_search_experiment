@@ -192,7 +192,7 @@
       let totalAnswer = 0;
       let totalTime = 0;
       let summary = [];
-      resultHTML += `<br><button onclick="downloadCSV()">📥 Download Summary CSV</button>`;
+      
 
       trials.forEach(t => {
         if (t.page_index) {
@@ -212,7 +212,13 @@
         }
       });
 
-      const overallAccuracy = ((totalCorrect / totalAnswer) * 100).toFixed(1);
+      
+    const overallAccuracy = ((totalCorrect / totalAnswer) * 100).toFixed(1);
+      resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
+      resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
+      resultHTML += `<p><strong>Overall Accuracy: <strong>${overallAccuracy}%</strong></p>`;
+      resultHTML += `<br><button onclick="downloadCSV()">📥 Download Summary CSV</button>`;
+      resultHTML += '</div>';
       window.summaryData = summary;
       window.summaryTotals = {
         totalCorrect,
@@ -220,13 +226,6 @@
         totalTime,
         overallAccuracy
       };
-    
-      resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
-      resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
-      resultHTML += `<p><strong>Overall Accuracy: <strong>${overallAccuracy}%</strong></p>`;
-      resultHTML += '</div>';
-
-      
       return resultHTML;
     },
     choices: ['Finish']
@@ -246,19 +245,13 @@
     }
   }
 
-  function downloadCSV() {
-    console.log(totals)
+function downloadCSV() {
     const rows = window.summaryData;
-    const totals = window.summaryTotals;
     if (!rows || rows.length === 0) return;
     const header = Object.keys(rows[0]);
-    let csv = [header.join(",")].concat(
+    const csv = [header.join(",")].concat(
       rows.map(r => header.map(h => r[h]).join(","))
     ).join("\n");
-    // ✅ 加入總結資料
-    csv += `\n\nTotal Correct,${totals.totalCorrect}/${totals.totalAnswer}`;
-    csv += `\nTotal Time (sec),${totals.totalTime}`;
-    csv += `\nOverall Accuracy,${totals.overallAccuracy}%`;
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
