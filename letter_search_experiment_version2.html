@@ -73,7 +73,7 @@
 
   const clickedASet = new Set(); /* ✅ 記錄使用者點選 */
 
-  const totalTargets = 400; /* ✅ 總目標字數 */
+  const totalTargets = 320; /* ✅ 總目標字數改為 320 */ /* ✅ 總目標字數 */
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').sort(() => Math.random() - 0.5); /* ✅ 打亂順序 */
   const baseCount = 8;
   const extra = totalTargets - baseCount * 26;
@@ -145,7 +145,7 @@
       on_finish: function (data) {
         const correctCount = clickedASet.size;
         const endTime = performance.now();
-        const elapsed = ((endTime - data.startTime) / 1000).toFixed(2);
+        const elapsed = ((endTime - (data.startTime || performance.now())) / 1000).toFixed(2); /* ✅ 修正 NaN 錯誤 */
         data.user_answer = correctCount;
         data.correct_answer = page.answer;
         data.page_index = index + 1;
