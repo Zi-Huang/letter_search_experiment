@@ -135,7 +135,7 @@
       choices: ['Next'],
       trial_duration: 90000,
       on_start: function (trial) {
-        trial.data = { startTime: performance.now() };
+        trial.data.startTime = performance.now(); // ✅ 正確地附加 startTime，不覆蓋其他資料
       },
       on_finish: function (data) {
         const correctCount = clickedASet.size;
@@ -155,7 +155,7 @@
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
       const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-      let html = '<h3>Summary</h3><table border="1" cellpadding="5"><tr><th>Page</th><th>Letter</th><th>Correct</th><th>Target</th><th>Accuracy</th><th>Time (s)</th></tr>';
+      let html = '<h3 style="text-align:center">Summary</h3><div style="display:flex;justify-content:center;"><table border="1" cellpadding="5"><tr><th>Page</th><th>Letter</th><th>Correct</th><th>Target</th><th>Accuracy</th><th>Time (s)</th></tr>';
       let totalCorrect = 0, totalTarget = 0, totalTime = 0;
       trials.forEach(t => {
         if (t.page_index) {
@@ -167,7 +167,7 @@
       });
       const totalAccuracy = ((totalCorrect / totalTarget) * 100).toFixed(1);
       html += `<tr><th>Total</th><td></td><td>${totalCorrect}</td><td>${totalTarget}</td><td>${totalAccuracy}%</td><td>${totalTime.toFixed(2)}</td></tr>`;
-      html += '</table><br><button onclick="downloadCSV()">Download CSV</button>';
+      html += '</table></div><br><div style="text-align:center"><button onclick="downloadCSV()">Download CSV</button>';
       return html;
     },
     choices: ['Finish']
