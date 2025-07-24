@@ -201,7 +201,7 @@
           totalAnswer += t.correct_answer;
           totalTime += t.page_time_sec || 0;
           const pageAccuracy = ((matched / t.correct_answer) * 100).toFixed(1);
-          resultHTML += `<li>Page ${t.page_index}: You selected <strong>${t.user_answer}</strong> / Actual = <strong>${t.correct_answer}</strong> → Accuracy: <strong>${pageAccuracy}%</strong><br>Time spent: ${t.page_time_sec} sec</li>`;
+          resultHTML += `<li>Page ${t.page_index}: You selected <strong>${t.user_answer}</strong> / Actual = <strong>${t.correct_answer}</strong> → Accuracy: <strong>${pageAccuracy}%</strong>; Time spent: ${t.page_time_sec} sec</li>`;
           summary.push({
             Page: t.page_index,
             Answer: t.correct_answer,
