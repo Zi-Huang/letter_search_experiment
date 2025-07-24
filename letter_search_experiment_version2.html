@@ -120,7 +120,7 @@
       type: jsPsychHtmlButtonResponse,
       stimulus: function () {
         clickedASet.clear();
-        let html = `<div class="word-box">Target Letter: ${page.letter}</div><div class="monofont">`;
+        let html = `<div class="word-box">Target Letter: ${page.letter}</div><div style="font-size: 18px;"> class="monofont">`;
         page.text.forEach((line, i) => {
           html += '<div class="letter-line">';
           for (let j = 0; j < line.length; j++) {
@@ -130,7 +130,7 @@
           }
           html += '</div>'; /* ✅ 每行結束 */
         });
-        html += `</div><br><strong>Page ${index + 1} / 26</strong>`;
+        html += `</div><br><strong>Page ${index + 1}</strong>`;
         return html;
       },
       choices: ['Next'],
