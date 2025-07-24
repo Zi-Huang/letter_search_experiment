@@ -7,55 +7,55 @@
   <script src="plugin-html-button-response.js"></script> <!-- 載入 html-button-response 插件 -->
   <link href="jspsych.css" rel="stylesheet" /> <!-- 載入 jsPsych 樣式表 -->
   <style>
+  
     html, body {
       margin: 0;
-      padding: 0;
+      padding: 0px;
       overflow-x: hidden; /* ✅ 防止畫面橫向捲動 */
-      box-sizing: border-box; /* ✅ 保證 padding 不會超出寬度限制 */
+      box-sizing: border-box; /* 保證 padding 不會超出寬度限制 */
     }
     body {
-      font-family: "Times New Roman", Times, serif; /* ✅ 設定字體為 Times New Roman */
-      display: flex; /* ✅ 使用 Flex 排版 */
-      flex-direction: column; /* ✅ 垂直排列元素 */
-      align-items: center; /* ✅ 內容水平置中 */
-      padding: 4vh 2vw; /* ✅ 上下左右預留空間，避免太擁擠 */
-      min-height: 100vh; /* ✅ 讓 body 至少與螢幕等高 */
-      max-width: 100vw; /* ✅ 最大寬度不超過畫面寬 */
-      overflow-y: auto; /* ✅ 垂直可捲動，避免內容被吃掉 */
+      font-family: "Times New Roman", Times, serif; /* 設定字體為 Times New Roman */
+      display: flex; /* 使用 flex 排版 */
+      flex-direction: column; /* 垂直排列子元素 */
+      align-items: center; /* 子元素水平置中 */
+      padding: 2vh 0; /* 上下留白 2% 高度 */
+      height: 100vh; /* 限制視窗高度防止過高內容跑出來 */
     }
     .jspsych-content {
-      max-width: 1000px; /* ✅ 內容最大寬度，避免滿版 */
-      width: 100%; /* ✅ 內容寬度為容器寬度 */
-      font-size: 20px; /* ✅ 文字大小固定 */
+      max-width: 1000px; /* 最大寬度避免滿版 */
+      width: 90%; /* 寬度為螢幕 90% */
+      margin: auto; /* 置中 */
+      font-size: 20px; /* 文字大小 */
     }
     .letter-button {
-      font-family: monospace; /* ✅ 等寬字體確保對齊 */
+      font-family: monospace; /* 等寬字體確保對齊 */
       display: inline-block;
-      width: 20px; /* ✅ 固定寬度以確保字元整齊 */
+      width: 20px; /* 固定寬度以確保字元整齊 */
       text-align: center;
       padding: 0px;
       margin: 0px;
       line-height: 1.2;
-      border-radius: 2px; /* ✅ 小圓角 */
+      border-radius: 2px; /* 小圓角 */
       cursor: pointer;
-      user-select: none; /* ✅ 禁止文字選取 */
+      user-select: none; /* 禁止文字選取 */
     }
     .letter-selected-correct {
-      background-color: gold; /* ✅ 點選 A 顯示黃色背景 */
+      background-color: gold; /* 點選 A 顯示黃色背景 */
       color: black;
     }
     .letter-line {
-      margin-bottom: 6px; /* ✅ 每行底部間距 */
-      white-space: pre; /* ✅ 保留空格與排版 */
+      margin-bottom: 6px; /* 每行底部間距 */
+      white-space: pre; /* 保留空格與排版 */
     }
     .monofont {
-      font-family: monospace; /* ✅ 等寬字型確保字元對齊 */
-      font-size: 20px; /* ✅ 字體大小 */
-      white-space: pre; /* ✅ 保留空格 */
-      display: inline-block; /* ✅ 讓整塊文字可以調整寬度 */
+      font-family: monospace; /* 等寬字型確保字元對齊 */
+      font-size: 20px; /* 字體大小 */
+      white-space: pre; /* 保留空格 */
+      display: inline-block; /* 讓整塊文字可以調整寬度 */
       max-width: 1000px;  /* ✅ 限制最大寬度，不會超過畫面 */
       width: 100%;  /* ✅ 根據裝置寬度縮放 */
-      overflow-x: hidden; /* ✅ 禁止橫向捲動 */
+      overflow-x: hidden;                
     }
   </style>
 </head>
@@ -63,23 +63,34 @@
   <div id="result-container"></div> <!-- 顯示結果與下載按鈕的容器 -->
 </body>
 <script>
-  // 🔰 初始化 jsPsych 並設定實驗結束時不自動下載
   const jsPsych = initJsPsych({
-    on_finish: () => {
-      // ✅ 改為點擊按鈕下載 CSV
-    }
+    on_finish: () => jsPsych.data.displayData() // 結束後顯示資料
   });
+  const clickedASet = new Set();
 
-  const clickedASet = new Set(); // 儲存使用者點擊 A 的 ID
+  // 設定整份實驗中總共要出現的 A 數（不改變總數）
+  const totalTargetAs = 240;
+  const pages = [];
+  const pageTargets = [];
+  let remaining = totalTargetAs;
 
-  // 🔁 生成一頁假文章，包含 0~2 個 A/行，總數在 8~15
-  function generatePageText(targetLetter = 'A') {
-    const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lines = Array(25).fill(''); // 一頁 25 行
-    const lineLength = 45; // 每行 45 字
-    let totalTargets = Math.floor(Math.random() * 8) + 8; // 隨機產生 8~15 個 A
-    const A_locations = {}; // 紀錄 A 所在位置
+  // 每頁隨機 8~15 個 A，總和控制為 totalTargetAs
+  for (let i = 0; i < 20; i++) {
+    let min = Math.max(8, remaining - (15 * (19 - i))); // 保證之後能湊到總和
+    let max = Math.min(15, remaining - (8 * (19 - i))); // 保證之後不會超過總和
+    const val = Math.floor(Math.random() * (max - min + 1)) + min;
+    pageTargets.push(val);
+    remaining -= val;
+  }
 
+  // 產生單一頁面文字內容與 A 分布
+  function generatePageText(targetLetter = 'A', totalTargets = 12) {
+    const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ'; // 不含 A 的字母
+    const lines = Array(25).fill(''); // 初始化 25 行空文字
+    const lineLength = 45; // 每行 45 個字元
+    const A_locations = {}; // 儲存 A 的位置索引
+
+    // 隨機在 25 行中分配 A，每行最多 2 個
     while (totalTargets > 0) {
       const lineIdx = Math.floor(Math.random() * 25);
       if (!A_locations[lineIdx]) A_locations[lineIdx] = [];
@@ -93,58 +104,58 @@
       }
     }
 
+    // 為每一行產生內容
     for (let i = 0; i < 25; i++) {
       const charArray = [];
       for (let j = 0; j < lineLength; j++) {
         if (A_locations[i] && A_locations[i].includes(j)) {
-          charArray.push(targetLetter);
+          charArray.push(targetLetter); // 插入 A
         } else {
           if (j > 0 && j < lineLength - 1 && Math.random() < 0.15) {
-            charArray.push(' ');
+            charArray.push(' '); // 插入空格
           } else {
-            charArray.push(alphabet[Math.floor(Math.random() * alphabet.length)]);
+            charArray.push(alphabet[Math.floor(Math.random() * alphabet.length)]); // 插入隨機字母
           }
         }
       }
+      // 頭尾不留空格
       if (charArray[0] === ' ') charArray[0] = alphabet[Math.floor(Math.random() * alphabet.length)];
       if (charArray[lineLength - 1] === ' ') charArray[lineLength - 1] = alphabet[Math.floor(Math.random() * alphabet.length)];
       lines[i] = charArray.join('');
     }
 
-    const count = Object.values(A_locations).reduce((acc, arr) => acc + arr.length, 0);
+    const count = Object.values(A_locations).reduce((acc, arr) => acc + arr.length, 0); // 總 A 數確認
     return { lines: lines, answer: count, locations: A_locations };
   }
 
-  // 📄 建立 20 頁內容
-  const pages = [];
+  // 根據每頁指定的 A 數產生頁面內容
   for (let p = 0; p < 20; p++) {
-    const result = generatePageText('A');
+    const result = generatePageText('A', pageTargets[p]);
     pages.push({ text: result.lines, answer: result.answer, locations: result.locations });
   }
 
-  const timeline = []; // 儲存實驗流程
+  // 以下流程維持不變
+  const timeline = [];
 
-  // 🟡 首頁指引頁面
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
-      <h2 style="font-family: Georgia, serif; font-size: 28px;">
+      <h2>
         Letter Search Task
       </h2>
-      <p style="font-family: Arial, sans-serif; font-size: 18px; line-height: 1.6;">
+      <p>
         You will see 20 pages of fake text. Click all letters "A" you find.<br>
-        You have 2 minutes per page. Click "Continue" to go to the next page.
+        You have 2 minutes/page. Click "Continue" to go to the next page.
       </p>`,
     choices: ['Start']
   });
 
-  // 🔁 每一頁任務
   pages.forEach((page, index) => {
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: function () {
         clickedASet.clear();
-        let html = '<div class="page-wrapper"><div class="monofont">';
+        let html = '<div class="monofont">';
         page.text.forEach((line, i) => {
           html += '<div class="letter-line">';
           for (let j = 0; j < line.length; j++) {
@@ -152,19 +163,19 @@
             const id = `char_${index}_${i}_${j}`;
             html += `<span id="${id}" class="letter-button" data-char="${char}" onclick="toggleLetter('${id}', '${char}')">${char}</span>`;
           }
-          html += '</div>'; // 關閉每一行
+          html += '</div>';
         });
-        html += `</div></div><div class="fixed-footer"><strong>Page ${index + 1}</strong><br></div>`;
+        html += `</div><br><strong>Page ${index + 1}</strong>`;
         return html;
       },
       choices: ['Continue'],
-      trial_duration: 120000, // 每頁限制 2 分鐘
+      trial_duration: 120000,
       on_finish: function (data) {
         let correctCount = clickedASet.size;
         data.user_answer = correctCount;
         data.correct_answer = page.answer;
         data.correct = (correctCount === page.answer);
-        data.correct_diff = Math.min(correctCount, page.answer); // 答對幾個 A
+        data.correct_diff = Math.min(correctCount, page.answer);
         data.page_index = index + 1;
         data.page_time_sec = Math.round(data.rt / 1000);
         data.page_accuracy = ((data.correct_diff / data.correct_answer) * 100).toFixed(1);
@@ -172,7 +183,6 @@
     });
   });
 
-  // 🟢 結果頁（含總結與下載按鈕）
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
@@ -181,6 +191,7 @@
       let totalCorrect = 0;
       let totalAnswer = 0;
       let totalTime = 0;
+      let summary = [];
 
       trials.forEach(t => {
         if (t.page_index) {
@@ -190,21 +201,28 @@
           totalTime += t.page_time_sec || 0;
           const pageAccuracy = ((matched / t.correct_answer) * 100).toFixed(1);
           resultHTML += `<li>Page ${t.page_index}: You selected <strong>${t.user_answer}</strong> / Actual = <strong>${t.correct_answer}</strong> → Accuracy: <strong>${pageAccuracy}%</strong><br>Time spent: ${t.page_time_sec} sec</li>`;
+          summary.push({
+            Page: t.page_index,
+            Answer: t.correct_answer,
+            Correct: matched,
+            "Time (sec)": t.page_time_sec,
+            "Accuracy (%)": pageAccuracy
+          });
         }
       });
 
       const overallAccuracy = ((totalCorrect / totalAnswer) * 100).toFixed(1);
-
       resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
       resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
       resultHTML += `<p><strong>Overall Accuracy: <strong>${overallAccuracy}%</strong></p>`;
       resultHTML += `<br><button onclick="downloadCSV()">📥 Download Summary CSV</button>`;
+
+      window.summaryData = summary;
       return resultHTML;
     },
     choices: ['Finish']
   });
 
-  // ⚙️ 點擊事件：點擊 A 才會被標記記錄
   function toggleLetter(id, char) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -219,9 +237,14 @@
     }
   }
 
-  // 💾 匯出 CSV 檔案功能
   function downloadCSV() {
-    const csv = jsPsych.data.get().csv();
+    const rows = window.summaryData;
+    if (!rows || rows.length === 0) return;
+    const header = Object.keys(rows[0]);
+    const csv = [header.join(",")].concat(
+      rows.map(r => header.map(h => r[h]).join(","))
+    ).join("\n");
+
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -233,7 +256,6 @@
     URL.revokeObjectURL(url);
   }
 
-  // ▶️ 執行實驗
   jsPsych.run(timeline);
 </script>
 </html>
