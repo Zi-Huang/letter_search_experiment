@@ -254,11 +254,17 @@ function downloadCSV() {
       rows.map(r => header.map(h => r[h]).join(","))
     ).join("\n");
 
-
     if (totals) {
-      // ✅ 加入總結資料
-    csv += `\nTotal,${totals.totalAnswer},${totals.totalCorrect},${totals.totalTime},${totals.overallAccuracy}%`;
+      const totalRow = [
+        "Total",
+        totals.totalAnswer,
+        totals.totalCorrect,
+        totals.totalTime,
+        `${totals.overallAccuracy}%`
+      ].join(",");
+      csv += `\n${totalRow}`;
     }
+
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
