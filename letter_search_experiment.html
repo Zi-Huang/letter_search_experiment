@@ -2,77 +2,66 @@
 <html lang="en"> <!-- 設定語言為英文 -->
 <head>
   <meta charset="UTF-8" /> <!-- 設定字元編碼 -->
-  <title>Letter Search Experiment</title> <!-- 設定頁面標題 -->
+  <title>Letter Search Experiment</title> <!-- 網頁標題 -->
   <script src="jspsych.js"></script> <!-- 載入 jsPsych 核心腳本 -->
-  <script src="plugin-html-button-response.js"></script> <!-- 載入按鈕插件 -->
-  <link href="jspsych.css" rel="stylesheet" /> <!-- 載入 jsPsych 樣式 -->
+  <script src="plugin-html-button-response.js"></script> <!-- 載入 html-button-response 插件 -->
+  <link href="jspsych.css" rel="stylesheet" /> <!-- 載入 jsPsych 樣式表 -->
   <style>
     html, body {
-      margin: 0; /* 移除預設外距 */
-      padding: 0; /* 移除預設內距 */
-      overflow-x: hidden; /* 禁止橫向捲動 */
-      background: #f4f4f4; /* 設定背景顏色 */
-      font-family: "Times New Roman", serif; /* 預設字體 */
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden; /* ✅ 防止畫面橫向捲動 */
+      box-sizing: border-box; /* ✅ 保證 padding 不會超出寬度限制 */
     }
-
     body {
-      display: flex; /* 使用 flex 排版 */
-      flex-direction: column; /* 垂直排列 */
-      align-items: center; /* 水平置中 */
-      padding: 2vh 0; /* 垂直方向留白 */
+      font-family: "Times New Roman", Times, serif; /* ✅ 設定字體為 Times New Roman */
+      display: flex; /* ✅ 使用 Flex 排版 */
+      flex-direction: column; /* ✅ 垂直排列元素 */
+      align-items: center; /* ✅ 內容水平置中 */
+      padding: 4vh 2vw; /* ✅ 上下左右預留空間，避免太擁擠 */
+      min-height: 100vh; /* ✅ 讓 body 至少與螢幕等高 */
+      max-width: 100vw; /* ✅ 最大寬度不超過畫面寬 */
+      overflow-y: auto; /* ✅ 垂直可捲動，避免內容被吃掉 */
     }
-
     .jspsych-content {
-      max-width: 1200px; /* 中央內容最大寬度 */
-      width: 90%; /* 隨裝置縮放但不滿版 */
-      font-size: 20px; /* 字體大小 */
+      max-width: 1000px; /* ✅ 內容最大寬度，避免滿版 */
+      width: 100%; /* ✅ 內容寬度為容器寬度 */
+      font-size: 20px; /* ✅ 文字大小固定 */
     }
-
     .letter-button {
-      font-family: monospace; /* 使用等寬字體確保對齊 */
-      display: inline-block; /* 可設定寬高 */
-      width: 20px; /* 每個字母寬度固定 */
-      text-align: center; /* 字元置中 */
-      padding: 0px; /* 無內距 */
-      margin: 0px; /* 無外距 */
-      line-height: 1.2; /* 行高 */
-      border-radius: 2px; /* 小圓角 */
-      cursor: pointer; /* 滑鼠變手型 */
-      user-select: none; /* 禁止選取文字 */
-    }
-
-    .letter-selected-correct {
-      background-color: gold; /* 點到 A 顯示黃色背景 */
-      color: black; /* 字色黑色 */
-    }
-
-    .letter-line {
-      margin-bottom: 6px; /* 每行底部間距 */
-      white-space: pre; /* 保留空格與排版 */
-    }
-
-    .monofont {
-      font-family: monospace; /* 使用等寬字型 */
-      font-size: 20px; /* 字體大小 */
-      white-space: pre; /* 保留空格 */
-    }
-
-    .page-wrapper {
-      max-height: 90vh; /* 最高高度限制在視窗 90% */
-      overflow-y: auto; /* 區塊內垂直捲動 */
-      padding-bottom: 80px; /* 留給按鈕空間 */
-    }
-
-    .fixed-footer {
-      position: sticky; /* 黏在底部 */
-      bottom: 0;
-      background: white;
+      font-family: monospace; /* ✅ 等寬字體確保對齊 */
+      display: inline-block;
+      width: 20px; /* ✅ 固定寬度以確保字元整齊 */
       text-align: center;
-      padding: 10px 0;
+      padding: 0px;
+      margin: 0px;
+      line-height: 1.2;
+      border-radius: 2px; /* ✅ 小圓角 */
+      cursor: pointer;
+      user-select: none; /* ✅ 禁止文字選取 */
+    }
+    .letter-selected-correct {
+      background-color: gold; /* ✅ 點選 A 顯示黃色背景 */
+      color: black;
+    }
+    .letter-line {
+      margin-bottom: 6px; /* ✅ 每行底部間距 */
+      white-space: pre; /* ✅ 保留空格與排版 */
+    }
+    .monofont {
+      font-family: monospace; /* ✅ 等寬字型確保字元對齊 */
+      font-size: 20px; /* ✅ 字體大小 */
+      white-space: pre; /* ✅ 保留空格 */
+      display: inline-block; /* ✅ 讓整塊文字可以調整寬度 */
+      max-width: 1000px;  /* ✅ 限制最大寬度，不會超過畫面 */
+      width: 100%;  /* ✅ 根據裝置寬度縮放 */
+      overflow-x: hidden; /* ✅ 禁止橫向捲動 */
     }
   </style>
 </head>
-<body></body> <!-- 空的 body，由 jsPsych 動態填入內容 -->
+<body>
+  <div id="result-container"></div> <!-- 顯示結果與下載按鈕的容器 -->
+</body>
 <script>
   // 🔰 初始化 jsPsych 並設定實驗結束時不自動下載
   const jsPsych = initJsPsych({
