@@ -193,7 +193,6 @@
       let totalTime = 0;
       let summary = [];
       resultHTML += `<br><button onclick="downloadCSV()">📥 Download Summary CSV</button>`;
-      resultHTML += '</div>'; // ✅ 補上關閉字體區塊
 
       trials.forEach(t => {
         if (t.page_index) {
@@ -217,6 +216,7 @@
       resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
       resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
       resultHTML += `<p><strong>Overall Accuracy: <strong>${overallAccuracy}%</strong></p>`;
+      resultHTML += '</div>';
 
       window.summaryData = summary;
       return resultHTML;
@@ -245,9 +245,10 @@
     const csv = [header.join(",")].concat(
       rows.map(r => header.map(h => r[h]).join(","))
     ).join("\n");
-    csv += `\n\nTotal Correct,${totalCorrect}/${totalAnswer}`;
-    csv += `\nTotal Time (sec),${totalTime}`;
-    csv += `\nOverall Accuracy,${overallAccuracy}%`;
+    // ✅ 加入總結資料
+    csv += `\n\nTotal Correct,${totals.totalCorrect}/${totals.totalAnswer}`;
+    csv += `\nTotal Time (sec),${totals.totalTime}`;
+    csv += `\nOverall Accuracy,${totals.overallAccuracy}%`;
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
