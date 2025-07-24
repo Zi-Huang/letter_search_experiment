@@ -212,13 +212,21 @@
         }
       });
 
+      window.summaryData = summary;
+      window.summaryTotals = {
+        totalCorrect,
+        totalAnswer,
+        totalTime,
+        overallAccuracy
+      };
+      
       const overallAccuracy = ((totalCorrect / totalAnswer) * 100).toFixed(1);
       resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
       resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
       resultHTML += `<p><strong>Overall Accuracy: <strong>${overallAccuracy}%</strong></p>`;
       resultHTML += '</div>';
 
-      window.summaryData = summary;
+      
       return resultHTML;
     },
     choices: ['Finish']
@@ -240,6 +248,7 @@
 
   function downloadCSV() {
     const rows = window.summaryData;
+    const totals = window.summaryTotals;
     if (!rows || rows.length === 0) return;
     const header = Object.keys(rows[0]);
     const csv = [header.join(",")].concat(
