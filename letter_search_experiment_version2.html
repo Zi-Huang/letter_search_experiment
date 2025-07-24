@@ -68,7 +68,7 @@
 
   const clickedASet = new Set(); /* ✅ 記錄使用者點選 */
 
-  const totalTargets = 320; /* ✅ 總目標字數 */
+  const totalTargets = 400; /* ✅ 總目標字數 */
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').sort(() => Math.random() - 0.5); /* ✅ 打亂順序 */
   const baseCount = 8;
   const extra = totalTargets - baseCount * 26;
@@ -135,7 +135,7 @@
       choices: ['Next'],
       trial_duration: 90000,
       on_start: function (trial) {
-        trial.data.startTime = performance.now(); // ✅ 正確紀錄開始時間不覆蓋整體資料
+        trial.data = { startTime: performance.now() };
       },
       on_finish: function (data) {
         const correctCount = clickedASet.size;
