@@ -75,10 +75,19 @@
 
   const totalTargets = 320; /* ✅ 總目標字數改為 320 */ /* ✅ 總目標字數 */
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').sort(() => Math.random() - 0.5); /* ✅ 打亂順序 */
-  const baseCount = 8;
-  const extra = totalTargets - baseCount * 26;
-  const distribution = Array(26).fill(baseCount);
-  for (let i = 0; i < extra; i++) distribution[i % 26]++;
+  function generateDistribution(targetTotal = 320, pageCount = 26, min = 8, max = 16) {
+  let dist = Array(pageCount).fill(min);
+  let remaining = targetTotal - min * pageCount;
+  while (remaining > 0) {
+    const idx = Math.floor(Math.random() * pageCount);
+    if (dist[idx] < max) {
+      dist[idx]++;
+      remaining--;
+    }
+  }
+  return dist;
+}
+const distribution = generateDistribution(320, 26, 8, 16);
 
   const pages = alphabet.map((letter, idx) => {
     const result = generateFixedPageText(letter, distribution[idx]);
@@ -140,12 +149,14 @@
       choices: ['Next'],
       trial_duration: 90000,
       on_start: function (trial) {
-        trial.data = { startTime: performance.now() };
+        trial.data = trial.data || {};
+        trial.data.startTime = performance.now();
+      };
       },
       on_finish: function (data) {
         const correctCount = clickedASet.size;
         const endTime = performance.now();
-        const elapsed = ((endTime - (data.startTime || performance.now())) / 1000).toFixed(2); /* ✅ 修正 NaN 錯誤 */
+        const elapsed = ((endTime - data.startTime) / 1000).toFixed(2); /* ✅ 修正 NaN 錯誤 */
         data.user_answer = correctCount;
         data.correct_answer = page.answer;
         data.page_index = index + 1;
