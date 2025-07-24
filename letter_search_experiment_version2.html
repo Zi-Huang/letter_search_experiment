@@ -8,122 +8,110 @@
   <link href="jspsych.css" rel="stylesheet" /> <!-- 載入 jsPsych 樣式表 -->
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden; /* ✅ 防止畫面橫向捲動 */
-      box-sizing: border-box; /* 保證 padding 不會超出寬度限制 */
+      margin: 0; /* ✅ 移除預設邊距 */
+      padding: 0; /* ✅ 移除預設內距 */
+      overflow-x: hidden; /* ✅ 防止橫向捲動 */
+      box-sizing: border-box; /* ✅ 包含 padding 計算寬高 */
     }
     body {
-      font-family: "Times New Roman", Times, serif; /* 設定字體為 Times New Roman */
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2vh 1vw;
-      height: 100vh;
+      font-family: "Times New Roman", Times, serif; /* ✅ 設定字型 */
+      display: flex; /* ✅ 使用 flex 排版 */
+      flex-direction: column; /* ✅ 垂直排列 */
+      align-items: center; /* ✅ 置中對齊 */
+      padding: 2vh 1vw; /* ✅ 四周留白 */
+      height: 100vh; /* ✅ 滿版高度 */
     }
     .jspsych-content {
-      max-width: 1000px;
-      width: 100%;
-      margin: auto;
-      font-size: 20px;
+      max-width: 1000px; /* ✅ 限制最大寬度 */
+      width: 100%; /* ✅ 寬度自動撐滿 */
+      margin: auto; /* ✅ 置中 */
+      font-size: 20px; /* ✅ 字體大小 */
     }
     .letter-button {
-      font-family: monospace; /* ✅ 等寬字體確保對齊 */
-      display: inline-block;
-      width: 17px; /* ✅ 固定寬度確保整齊排版 */
-      text-align: center;
-      padding: 0px;
-      margin: 0px;
-      line-height: 1.1;
-      border-radius: 2px;
-      cursor: pointer;
-      user-select: none;
+      font-family: monospace; /* ✅ 使用等寬字體 */
+      display: inline-block; /* ✅ 行內區塊顯示 */
+      width: 17px; /* ✅ 固定寬度 */
+      text-align: center; /* ✅ 置中文字 */
+      padding: 0px; /* ✅ 無內距 */
+      margin: 0px; /* ✅ 無外距 */
+      line-height: 1.1; /* ✅ 行高 */
+      border-radius: 2px; /* ✅ 邊角圓弧 */
+      cursor: pointer; /* ✅ 滑鼠指標 */
+      user-select: none; /* ✅ 禁止選取 */
     }
     .letter-selected-correct {
-      background-color: gold; /* ✅ 標記選取 A 字母 */
-      color: black;
+      background-color: gold; /* ✅ 標示點選 */
+      color: black; /* ✅ 點選顏色 */
     }
     .letter-line {
-      margin-bottom: 3.5px; /* ✅ 每行底部間距調整 */
-      white-space: pre;
+      margin-bottom: 3.5px; /* ✅ 每行間距 */
+      white-space: pre; /* ✅ 保留空白格式 */
     }
     .monofont {
-      font-family: monospace;
-      font-size: 20px;
-      white-space: pre;
-      display: inline-block;
-      max-width: 1000px;
-      width: 100%;
-      overflow-x: hidden;
+      font-family: monospace; /* ✅ 等寬字體 */
+      font-size: 20px; /* ✅ 字體大小 */
+      white-space: pre; /* ✅ 保持行排版 */
+      display: inline-block; /* ✅ 區塊顯示 */
+      max-width: 1000px; /* ✅ 最大寬度限制 */
+      width: 100%; /* ✅ 撐滿容器 */
+      overflow-x: hidden; /* ✅ 不顯示橫向捲軸 */
     }
   </style>
 </head>
 <body>
-  <div id="result-container"></div> <!-- ✅ 顯示實驗結束結果表格的區塊 -->
+  <div id="result-container"></div> <!-- ✅ 顯示結果區塊 -->
 </body>
 <script>
   const jsPsych = initJsPsych({
-    on_finish: () => jsPsych.data.displayData() // ✅ 實驗結束時顯示資料
+    on_finish: () => jsPsych.data.displayData() /* ✅ 實驗結束顯示資料 */
   });
 
-  const clickedASet = new Set(); // ✅ 記錄使用者點擊的 A ID 集合
+  const clickedASet = new Set(); /* ✅ 記錄使用者點選 */
 
-  const pages = []; // ✅ 存放所有 26 篇文章內容
-  const pageTargets = []; // ✅ 每篇文章目標字母數量紀錄
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const totalTargets = 400; /* ✅ 總目標字數 */
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').sort(() => Math.random() - 0.5); /* ✅ 打亂順序 */
+  const baseCount = 8;
+  const extra = totalTargets - baseCount * 26;
+  const distribution = Array(26).fill(baseCount);
+  for (let i = 0; i < extra; i++) distribution[i % 26]++;
 
-  // ✅ 每篇文章一個固定目標字母（A-Z）與 8~15 個該字母
-  for (let i = 0; i < 26; i++) {
-    const target = alphabet[i]; // ✅ 設定該篇目標字母
-    const count = Math.floor(Math.random() * 8) + 8; // ✅ 目標字母數量：8~15
-    const result = generateFixedPageText(target, count);
-    pages.push({ text: result.lines, answer: result.answer, letter: target });
-  }
+  const pages = alphabet.map((letter, idx) => {
+    const result = generateFixedPageText(letter, distribution[idx]);
+    return { text: result.lines, answer: result.answer, letter: letter };
+  });
 
   // ✅ 固定內容：產生 25 行 × 45 字（含指定數量目標字母）
-  function generateFixedPageText(targetLetter = 'A', totalTargets = 12) {
-    const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+ function generateFixedPageText(targetLetter = 'A', totalTargets = 12) {
+    const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
     const nonTargetChars = allChars.replace(targetLetter, '');
     const lineLength = 45;
-    const lines = Array(25).fill('');
-    const A_locations = {};
+    const totalLines = 25;
+    const content = Array(lineLength * totalLines).fill('');
 
-    while (totalTargets > 0) {
-      const lineIdx = Math.floor(Math.random() * 25);
-      if (!A_locations[lineIdx]) A_locations[lineIdx] = [];
-      if (A_locations[lineIdx].length < 2) {
-        let pos;
-        do {
-          pos = Math.floor(Math.random() * lineLength);
-        } while (A_locations[lineIdx].includes(pos));
-        A_locations[lineIdx].push(pos);
-        totalTargets--;
-      }
-    }
+    const positions = [...Array(lineLength * totalLines).keys()];
+    const targetPos = positions.sort(() => Math.random() - 0.5).slice(0, totalTargets);
+    for (const pos of targetPos) content[pos] = targetLetter;
+    for (let i = 0; i < content.length; i++) if (!content[i]) content[i] = randomChar(nonTargetChars);
 
-    for (let i = 0; i < 25; i++) {
-      const chars = [];
-      for (let j = 0; j < lineLength; j++) {
-        if (A_locations[i] && A_locations[i].includes(j)) {
-          chars.push(targetLetter); // ✅ 插入目標字母
-        } else {
-          chars.push(nonTargetChars[Math.floor(Math.random() * nonTargetChars.length)]); // ✅ 插入隨機非目標字
-        }
-      }
-      lines[i] = chars.join(''); // ✅ 組成一行
+    const lines = [];
+    for (let i = 0; i < totalLines; i++) {
+      const line = content.slice(i * lineLength, (i + 1) * lineLength);
+      if (line[0] === ' ') line[0] = randomChar(nonTargetChars);
+      if (line[44] === ' ') line[44] = randomChar(nonTargetChars);
+      lines.push(line.join(''));
     }
-    const count = Object.values(A_locations).reduce((a, b) => a + b.length, 0); // ✅ 總目標字數
-    return { lines, answer: count };
+    return { lines, answer: totalTargets };
+  }
+
+  function randomChar(set) {
+    return set[Math.floor(Math.random() * set.length)];
   }
 
   const timeline = [];
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: `
-      <h2>Letter Search Task</h2>
-      <p>You will see 26 fake text, each with a designated target letter (such as A~Z). <br>
-        Please click on all the target letters you find, within 90 seconds</p>`,
+    stimulus: `<h2>Letter Search Task</h2><p>You will see 26 fixed texts. Each page has a target letter (A-Z).<br>Click all target letters within 90 seconds.</p>`,
     choices: ['Start']
   });
 
@@ -132,7 +120,7 @@
       type: jsPsychHtmlButtonResponse,
       stimulus: function () {
         clickedASet.clear();
-        let html = `<div class="word-box">Target Letter：${page.letter}</div><div class="monofont">`;
+        let html = `<div class="word-box">Target Letter: ${page.letter}</div><div class="monofont">`;
         page.text.forEach((line, i) => {
           html += '<div class="letter-line">';
           for (let j = 0; j < line.length; j++) {
@@ -140,34 +128,46 @@
             const id = `char_${index}_${i}_${j}`;
             html += `<span id="${id}" class="letter-button" data-char="${char}" onclick="toggleLetter('${id}', '${char}', '${page.letter}')">${char}</span>`;
           }
-          html += '</div>'; // ✅ 每行結束
+          html += '</div>'; /* ✅ 每行結束 */
         });
-        html += `</div><br><strong>Page ${index + 1}`;
+        html += `</div><br><strong>Page ${index + 1} / 26</strong>`;
         return html;
       },
-      choices: ['Continue'],
-      trial_duration: 90000, // ✅ 每頁 90 秒
+      choices: ['Next'],
+      trial_duration: 90000,
+      on_start: function (trial) {
+        trial.data = { startTime: performance.now() };
+      },
       on_finish: function (data) {
         const correctCount = clickedASet.size;
+        const endTime = performance.now();
+        const elapsed = ((endTime - data.startTime) / 1000).toFixed(2);
         data.user_answer = correctCount;
         data.correct_answer = page.answer;
         data.page_index = index + 1;
         data.letter = page.letter;
         data.accuracy = ((Math.min(correctCount, page.answer) / page.answer) * 100).toFixed(1);
+        data.time = elapsed;
       }
     });
   });
 
-  timeline.push({
+ timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
       const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-      let html = '<h3>Result</h3><table border="1" cellpadding="5"><tr><th>Target</th><th>Correct</th><th>Answer</th><th>Accuracy</th></tr>';
+      let html = '<h3>Summary</h3><table border="1" cellpadding="5"><tr><th>Page</th><th>Letter</th><th>Correct</th><th>Target</th><th>Accuracy</th><th>Time (s)</th></tr>';
+      let totalCorrect = 0, totalTarget = 0, totalTime = 0;
       trials.forEach(t => {
         if (t.page_index) {
-          html += `<tr><td>${t.letter}</td><td>${t.user_answer}</td><td>${t.correct_answer}</td><td>${t.accuracy}%</td></tr>`;
+          totalCorrect += t.user_answer;
+          totalTarget += t.correct_answer;
+          totalTime += parseFloat(t.time);
+          html += `<tr><td>${t.page_index}</td><td>${t.letter}</td><td>${t.user_answer}</td><td>${t.correct_answer}</td><td>${t.accuracy}%</td><td>${t.time}</td></tr>`;
         }
       });
+      const totalAccuracy = ((totalCorrect / totalTarget) * 100).toFixed(1);
+      html += `<tr><th>Total</th><td></td><td>${totalCorrect}</td><td>${totalTarget}</td><td>${totalAccuracy}%</td><td>${totalTime.toFixed(2)}</td></tr>`;
       html += '</table><br><button onclick="downloadCSV()">Download CSV</button>';
       return html;
     },
@@ -190,12 +190,18 @@
 
   function downloadCSV() {
     const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-    let csv = 'Letter,Correct,Target,Accuracy\n';
+    let csv = 'Page,Letter,Correct,Target,Accuracy,Time\n';
+    let totalCorrect = 0, totalTarget = 0, totalTime = 0;
     trials.forEach(t => {
       if (t.page_index) {
-        csv += `${t.letter},${t.user_answer},${t.correct_answer},${t.accuracy}%\n`;
+        totalCorrect += t.user_answer;
+        totalTarget += t.correct_answer;
+        totalTime += parseFloat(t.time);
+        csv += `${t.page_index},${t.letter},${t.user_answer},${t.correct_answer},${t.accuracy}%,${t.time}\n`;
       }
     });
+    const totalAccuracy = ((totalCorrect / totalTarget) * 100).toFixed(1);
+    csv += `Total,,${totalCorrect},${totalTarget},${totalAccuracy}%,${totalTime.toFixed(2)}\n`;
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -203,6 +209,7 @@
     a.click();
   }
 
-  jsPsych.run(timeline);
+  jsPsych.run(timeline); /* ✅ 啟動實驗流程 */
 </script>
 </html>
+
