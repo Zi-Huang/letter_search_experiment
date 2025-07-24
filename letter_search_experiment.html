@@ -23,15 +23,15 @@
       height: 100vh; /* 限制視窗高度防止過高內容跑出來 */
     }
     .jspsych-content {
-      max-width: 100vw; /* 最大寬度為整個視窗寬度 */
-      width: 90%; /* 寬度為螢幕 90% */
+      max-width: 1000px; /* 最大寬度避免滿版 */
+      width: 100%; /* 寬度為螢幕 90% */
       margin: auto; /* 置中 */
-      font-size: 20px; /* 文字大小 */
+      font-size: 18px; /* 文字大小 */
     }
     .letter-button {
       font-family: monospace; /* 等寬字體確保對齊 */
       display: inline-block;
-      width: calc(100vw / 47); /* ⚠ 根據螢幕寬度調整，約分為 47 份，45 字元加邊界預留 */
+      width: 18px; /* 固定寬度以確保字元整齊 */
       text-align: center;
       padding: 0px;
       margin: 0px;
@@ -45,7 +45,7 @@
       color: black;
     }
     .letter-line {
-      margin-bottom: 4px; /* 每行底部間距 */
+      margin-bottom: 3.5px; /* 每行底部間距 */
       white-space: pre; /* 保留空格與排版 */
     }
     .monofont {
@@ -53,8 +53,8 @@
       font-size: 20px; /* 字體大小 */
       white-space: pre; /* 保留空格 */
       display: inline-block; /* 讓整塊文字可以調整寬度 */
-      width: fit-content; /* 自動調整內容寬度 */
-      max-width: 100vw; /* 不超出螢幕寬度 */
+      max-width: 1000px;  /* ✅ 限制最大寬度，不會超過畫面 */
+      width: 100%;  /* ✅ 根據裝置寬度縮放 */
       overflow-x: hidden;                
     }
   </style>
