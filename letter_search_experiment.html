@@ -7,6 +7,7 @@
   <script src="plugin-html-button-response.js"></script> <!-- 載入 html-button-response 插件 -->
   <link href="jspsych.css" rel="stylesheet" /> <!-- 載入 jsPsych 樣式表 -->
   <style>
+  
     html, body {
       margin: 0;
       padding: 0px;
@@ -54,19 +55,7 @@
       display: inline-block; /* 讓整塊文字可以調整寬度 */
       max-width: 1000px;  /* ✅ 限制最大寬度，不會超過畫面 */
       width: 100%;  /* ✅ 根據裝置寬度縮放 */
-      overflow-x: hidden; /* ✅ 不允許水平捲動 */
-    }
-    .page-wrapper {
-      max-height: 80vh; /* 限制文字區最大高度為視窗 80% */
-      overflow-y: auto; /* 當內容太多時內部捲動 */
-      padding-bottom: 80px; /* 預留下方空間給按鈕 */
-    }
-    .fixed-footer {
-      position: sticky; /* 吸附在底部 */
-      bottom: 0;
-      background: white;
-      text-align: center;
-      padding: 10px 0;
+      overflow-x: hidden;                
     }
   </style>
 </head>
@@ -166,7 +155,7 @@
       type: jsPsychHtmlButtonResponse,
       stimulus: function () {
         clickedASet.clear();
-        let html = '<div class="page-wrapper"><div class="monofont">'; // ✅ 包住內容用以捲動
+        let html = '<div class="monofont">';
         page.text.forEach((line, i) => {
           html += '<div class="letter-line">';
           for (let j = 0; j < line.length; j++) {
@@ -176,7 +165,7 @@
           }
           html += '</div>';
         });
-        html += `</div></div><div class="fixed-footer"><strong>Page ${index + 1}</strong><br></div>`; // ✅ 固定頁碼位置
+        html += `</div><br><strong>Page ${index + 1}</strong>`;
         return html;
       },
       choices: ['Continue'],
@@ -194,6 +183,79 @@
     });
   });
 
-  // 其他程式碼保持不變...
+  timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: function () {
+      const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
+      let resultHTML = '<h2>Results</h2><ol>';
+      let totalCorrect = 0;
+      let totalAnswer = 0;
+      let totalTime = 0;
+      let summary = [];
+
+      trials.forEach(t => {
+        if (t.page_index) {
+          const matched = Math.min(t.user_answer, t.correct_answer);
+          totalCorrect += matched;
+          totalAnswer += t.correct_answer;
+          totalTime += t.page_time_sec || 0;
+          const pageAccuracy = ((matched / t.correct_answer) * 100).toFixed(1);
+          resultHTML += `<li>Page ${t.page_index}: You selected <strong>${t.user_answer}</strong> / Actual = <strong>${t.correct_answer}</strong> → Accuracy: <strong>${pageAccuracy}%</strong><br>Time spent: ${t.page_time_sec} sec</li>`;
+          summary.push({
+            Page: t.page_index,
+            Answer: t.correct_answer,
+            Correct: matched,
+            "Time (sec)": t.page_time_sec,
+            "Accuracy (%)": pageAccuracy
+          });
+        }
+      });
+
+      const overallAccuracy = ((totalCorrect / totalAnswer) * 100).toFixed(1);
+      resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
+      resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
+      resultHTML += `<p><strong>Overall Accuracy: <strong>${overallAccuracy}%</strong></p>`;
+      resultHTML += `<br><button onclick="downloadCSV()">📥 Download Summary CSV</button>`;
+
+      window.summaryData = summary;
+      return resultHTML;
+    },
+    choices: ['Finish']
+  });
+
+  function toggleLetter(id, char) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.classList.contains('letter-selected-correct')) {
+      el.classList.remove('letter-selected-correct');
+      clickedASet.delete(id);
+    } else {
+      if (char === 'A') {
+        el.classList.add('letter-selected-correct');
+        clickedASet.add(id);
+      }
+    }
+  }
+
+  function downloadCSV() {
+    const rows = window.summaryData;
+    if (!rows || rows.length === 0) return;
+    const header = Object.keys(rows[0]);
+    const csv = [header.join(",")].concat(
+      rows.map(r => header.map(h => r[h]).join(","))
+    ).join("\n");
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `letter_search_${Date.now()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  jsPsych.run(timeline);
 </script>
 </html>
