@@ -212,6 +212,7 @@
         }
       });
 
+      const overallAccuracy = ((totalCorrect / totalAnswer) * 100).toFixed(1);
       window.summaryData = summary;
       window.summaryTotals = {
         totalCorrect,
@@ -219,8 +220,7 @@
         totalTime,
         overallAccuracy
       };
-      
-      const overallAccuracy = ((totalCorrect / totalAnswer) * 100).toFixed(1);
+    
       resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
       resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
       resultHTML += `<p><strong>Overall Accuracy: <strong>${overallAccuracy}%</strong></p>`;
