@@ -250,9 +250,16 @@ function downloadCSV() {
     const totals = window.summaryTotals;
     if (!rows || rows.length === 0) return;
     const header = Object.keys(rows[0]);
-    const csv = [header.join(",")].concat(
+    let csv = [header.join(",")].concat(
       rows.map(r => header.map(h => r[h]).join(","))
     ).join("\n");
+
+
+    if (totals) {
+      csv += `\n\nTotal Correct,${totals.totalCorrect}/${totals.totalAnswer}`;
+      csv += `\nTotal Time (sec),${totals.totalTime}`;
+      csv += `\nOverall Accuracy,${totals.overallAccuracy}%`;
+    }
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
