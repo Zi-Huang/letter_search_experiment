@@ -11,21 +11,21 @@
     html, body {
       margin: 0;
       padding: 0px;
-      overflow-x: hidden; /* ✅ 防止畫面橫向捲動 */
+      overflow: hidden; /* ✅ 禁止橫向與縱向捲動，確保畫面固定 */
       box-sizing: border-box; /* 保證 padding 不會超出寬度限制 */
+      height: 100vh; /* 設定整頁高度為螢幕可視範圍 */
     }
     body {
       font-family: "Times New Roman", Times, serif; /* 設定字體為 Times New Roman */
       display: flex; /* 使用 flex 排版 */
       flex-direction: column; /* 垂直排列子元素 */
       align-items: center; /* 子元素水平置中 */
-      padding: 2vh 0; /* 上下留白 2% 高度 */
-      height: 100vh; /* 限制視窗高度防止過高內容跑出來 */
+      justify-content: center; /* 子元素垂直置中，確保不需滑動即可看到全部 */
+      padding: 0; /* 取消上下留白，完整貼合螢幕 */
     }
     .jspsych-content {
       max-width: 1000px; /* 最大寬度避免滿版 */
-      width: 90%; /* 寬度為螢幕 90% */
-      margin: auto; /* 置中 */
+      width: 90vw; /* 寬度為螢幕 90%，可隨解析度變動 */
       font-size: 20px; /* 文字大小 */
     }
     .letter-button {
@@ -45,7 +45,7 @@
       color: black;
     }
     .letter-line {
-      margin-bottom: 6px; /* 每行底部間距 */
+      margin-bottom: 4px; /* 每行底部間距減少以容納更多行 */
       white-space: pre; /* 保留空格與排版 */
     }
     .monofont {
@@ -53,9 +53,8 @@
       font-size: 20px; /* 字體大小 */
       white-space: pre; /* 保留空格 */
       display: inline-block; /* 讓整塊文字可以調整寬度 */
-      max-width: 1000px;  /* ✅ 限制最大寬度，不會超過畫面 */
-      width: 100%;  /* ✅ 根據裝置寬度縮放 */
-      overflow-x: hidden;                
+      max-width: 1000px;  /* 限制最大寬度，不會超過畫面 */
+      width: 100%;  /* 根據裝置寬度縮放 */
     }
   </style>
 </head>
