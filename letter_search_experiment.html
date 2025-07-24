@@ -187,7 +187,7 @@
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
       const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-      let resultHTML = '<div style="font-size: 16px;"><h2>Results</h2><ol>';
+      let resultHTML = '<div style="font-size: 14px;"><h2>Results</h2><ol>';
       let totalCorrect = 0;
       let totalAnswer = 0;
       let totalTime = 0;
@@ -217,7 +217,6 @@
       resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
       resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
       resultHTML += `<p><strong>Overall Accuracy: <strong>${overallAccuracy}%</strong></p>`;
-      resultHTML += `<br><button onclick="downloadCSV()">📥 Download Summary CSV</button>`;
 
       window.summaryData = summary;
       return resultHTML;
@@ -246,6 +245,9 @@
     const csv = [header.join(",")].concat(
       rows.map(r => header.map(h => r[h]).join(","))
     ).join("\n");
+    csv += `\n\nTotal Correct,${totalCorrect}/${totalAnswer}`;
+    csv += `\nTotal Time (sec),${totalTime}`;
+    csv += `\nOverall Accuracy,${overallAccuracy}%`;
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
