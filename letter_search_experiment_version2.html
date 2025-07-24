@@ -2,7 +2,7 @@
 <html lang="en"> <!-- 設定語言為英文 -->
 <head>
   <meta charset="UTF-8" /> <!-- 設定字元編碼 -->
-  <title>字母搜尋實驗（固定文章）</title> <!-- ✅ 保留中文標題 -->
+  <title>Letter Search Experiment</title> <!-- ✅ 保留中文標題 -->
   <script src="jspsych.js"></script> <!-- 載入 jsPsych 核心腳本 -->
   <script src="plugin-html-button-response.js"></script> <!-- 載入 html-button-response 插件 -->
   <link href="jspsych.css" rel="stylesheet" /> <!-- 載入 jsPsych 樣式表 -->
@@ -121,10 +121,10 @@
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
-      <h2>字母搜尋任務說明</h2>
-      <p>你將看到 26 篇固定假文章，每篇有一個指定目標字母（如 A~Z）。<br>
-      請點擊所有你找到的該目標字母，限時 90 秒，點選「繼續」進入下一篇。</p>`,
-    choices: ['開始']
+      <h2>Letter Search Task</h2>
+      <p>You will see 26 fake text, each with a designated target letter (such as A~Z). <br>
+        Please click on all the target letters you find, within 90 seconds</p>`,
+    choices: ['Start']
   });
 
   pages.forEach((page, index) => {
@@ -162,16 +162,16 @@
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
       const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-      let html = '<h3>結果摘要</h3><table border="1" cellpadding="5"><tr><th>字母</th><th>答對數</th><th>應找數</th><th>準確率</th></tr>';
+      let html = '<h3>Result</h3><table border="1" cellpadding="5"><tr><th>字母</th><th>答對數</th><th>應找數</th><th>準確率</th></tr>';
       trials.forEach(t => {
         if (t.page_index) {
           html += `<tr><td>${t.letter}</td><td>${t.user_answer}</td><td>${t.correct_answer}</td><td>${t.accuracy}%</td></tr>`;
         }
       });
-      html += '</table><br><button onclick="downloadCSV()">下載 CSV</button>';
+      html += '</table><br><button onclick="downloadCSV()">Download CSV</button>';
       return html;
     },
-    choices: ['完成']
+    choices: ['Finish']
   });
 
   function toggleLetter(id, char, target) {
