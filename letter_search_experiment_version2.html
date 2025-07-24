@@ -2,150 +2,139 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Letter Search Experiment</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Letter Search Game - Fixed Articles</title>
+  <link href="jspsych.css" rel="stylesheet" />
   <script src="jspsych.js"></script>
   <script src="plugin-html-button-response.js"></script>
-  <script src="plugin-survey-text.js"></script>
-  <link href="jspsych.css" rel="stylesheet" />
   <style>
-    body {
-     Times New Roman, serif;
-      padding: 40px;
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #fff;
+      font-family: "Times New Roman", serif;
     }
-    .jspsych-content {
-      max-width: 1400px;
-      margin: auto;
-      font-size: 20px;
+    .article {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 1vh;
+      box-sizing: border-box;
     }
-    .monofont {
-      font-family: monospace;
-      line-height: 1.6;
-      font-size: 30px;
-      white-space: pre-wrap;
+    .line {
+      font-size: 1.6vh;
+      line-height: 1.2;
+      white-space: pre;
+      font-family: "Times New Roman", serif;
+    }
+    .letter {
+      display: inline-block;
+      padding: 0.2vh;
+      margin: 0;
+      cursor: pointer;
+      user-select: none;
+    }
+    .selected {
+      background-color: gold;
+      color: black;
+    }
+    .target-display {
+      font-size: 2vh;
+      font-weight: bold;
+      margin-bottom: 1vh;
     }
   </style>
 </head>
-<body></body>
-<script>
-  const jsPsych = initJsPsych({
-    on_finish: () => jsPsych.data.displayData()
-  });
+<body>
+  <div id="jspsych-target"></div>
+  <script>
+    const articles = {
+      "A": { "target": "A", "targetCount": 11, "content": [
+        "8PTLV61FE24RHD3D7CGD2ZG0RYOYTHNBSST245GVVVR05",
+        "P19E2959GBV7ZZ06CY8W217944C4BO8RV45GD9JRTNKSX",
+        "X8ZUU16XKYC6YE3RK7UP6VK1Y9DX0OQ08V3CCD94UT9JX",
+        // ... 22 more lines
+      ] },
+      // 其餘 B ~ Z 的資料，略，請貼入完整 articles 物件
+    };
 
-  function generateFakeLine(targetLetter, targetCount, lineLength = 45) {
-    const alphabet = 'BCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let line = '';
-    while (line.length < lineLength - 5) {
-      let wordLength = Math.floor(Math.random() * 4) + 2;
-      let word = '';
-      for (let i = 0; i < wordLength; i++) {
-        word += alphabet[Math.floor(Math.random() * alphabet.length)];
-      }
-      if (line.length + word.length + 1 <= lineLength) {
-        line += word + ' ';
-      } else {
-        break;
-      }
-    }
-    line = line.trim();
-    while (line.length < lineLength) {
-      line += alphabet[Math.floor(Math.random() * alphabet.length)];
-    }
+    const timeline = [];
+    const results = [];
 
-    let flat = line.split('');
-    let positions = [];
-    while (positions.length < targetCount) {
-      let idx = Math.floor(Math.random() * flat.length);
-      if (flat[idx] !== targetLetter && flat[idx] !== ' ') {
-        flat[idx] = targetLetter;
-        positions.push(idx);
-      }
-    }
-    return flat.join('');
-  }
+    const letters = Object.keys(articles);
 
-  const pages = [];
-  const answers = [];
-  for (let p = 0; p < 20; p++) {
-    let pageText = [];
-    let totalTargets = 0;
-    for (let i = 0; i < 25; i++) {
-      let lineTargets = Math.floor(Math.random() * 2) + 1; // 1-2 A per line
-      let line = generateFakeLine('A', lineTargets, 45);
-      pageText.push(line);
-      totalTargets += lineTargets;
-    }
-    let finalTotal = Math.max(8, Math.min(15, totalTargets));
-    answers.push(finalTotal);
-    pages.push({ text: pageText.join('\n'), answer: finalTotal });
-  }
+    letters.forEach(letter => {
+      const article = articles[letter];
+      const contentLines = article.content;
 
-  const timeline = [];
-
-  timeline.push({
-    type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>Letter Search Task</h2><p>Please read the text below and find the letter "A".Total: 20 pages. Click the letters you found, then enter the answer..</p>',
-    choices: ['Start']
-  });
-
-  pages.forEach((page, index) => {
-    timeline.push({
-      type: jsPsychSurveyText,
-      preamble: `<div class="monofont">${page.text}</div>`,
-      questions: [{
-        prompt: `Page ${index + 1}: How many A's did you find?`,
-        name: `count_${index + 1}`,
-        required: true
-      }],
-      data: {
-        correct_answer: page.answer,
-        page_index: index + 1
-      },
-      trial_duration: 120000, // 2 minutes
-      on_finish: function (data) {
-        let input = parseInt(data.response[`count_${data.page_index}`]);
-        data.user_answer = input;
-        data.correct = (input === data.correct_answer);
-        data.correct_diff = Math.min(input, data.correct_answer);
-        data.page_time_sec = Math.round(data.rt / 1000);
-      }
-    });
-  });
-
-  timeline.push({
-    type: jsPsychHtmlButtonResponse,
-    stimulus: function () {
-      let trials = jsPsych.data.get().filter({ trial_type: 'survey-text' }).values();
-      let resultHTML = "<h2>Results</h2><ol>";
-      let totalCorrect = 0;
-      let totalAnswer = 0;
-      let totalTime = 0;
-
-      trials.forEach(trial => {
-        let page = trial.page_index;
-        let correctAns = trial.correct_answer;
-        let userAns = trial.user_answer;
-        let matched = Math.min(correctAns, userAns);
-        let timeSpent = trial.page_time_sec || 0;
-        totalCorrect += matched;
-        totalAnswer += correctAns;
-        totalTime += timeSpent;
-        let status = (userAns === correctAns) ? "✅ Correct" : `❌`;
-
-        resultHTML += `
-          <li>
-            Page ${page}: Your Answer/Actual = <strong>${userAns}</strong>/<strong>${correctAns}</strong> → ${status}<br>
-            Time Spent: ${timeSpent} seconds
-          </li>
-        `;
+      timeline.push({
+        type: 'html-button-response',
+        stimulus: () => {
+          const target = article.target;
+          let html = `<div class='article'><div class='target-display'>目標字母：<span>${target}</span></div>`;
+          contentLines.forEach((line, lineIndex) => {
+            html += `<div class='line'>`;
+            for (let i = 0; i < line.length; i++) {
+              const char = line[i];
+              html += `<span class='letter' data-line='${lineIndex}' data-index='${i}' onclick='toggleSelection(this)'>${char}</span>`;
+            }
+            html += `</div>`;
+          });
+          html += `</div>`;
+          return html;
+        },
+        choices: [],
+        trial_duration: 90000,
+        on_finish: (data) => {
+          const correct = document.querySelectorAll('.letter.selected');
+          let correctCount = 0;
+          correct.forEach(el => {
+            if (el.textContent === articles[letter].target) correctCount++;
+          });
+          results.push({
+            letter,
+            time: data.rt / 1000,
+            correct: correctCount,
+            targetTotal: articles[letter].targetCount,
+            accuracy: ((correctCount / articles[letter].targetCount) * 100).toFixed(1) + "%"
+          });
+        }
       });
+    });
 
-      resultHTML += `</ol><p><strong>Total A's Correct: ${totalCorrect}/${totalAnswer}</strong></p>`;
-      resultHTML += `<p><strong>Total Time Spent: ${totalTime} seconds</strong></p>`;
-      return resultHTML;
-    },
-    choices: ['Finish']
-  });
+    timeline.push({
+      type: 'html-button-response',
+      stimulus: () => {
+        let html = '<h2>完成！結果如下：</h2><table border="1" cellpadding="5" style="font-size:1.5vh;"><tr><th>字母</th><th>正確數</th><th>應找數</th><th>時間（秒）</th><th>準確率</th></tr>';
+        results.forEach(r => {
+          html += `<tr><td>${r.letter}</td><td>${r.correct}</td><td>${r.targetTotal}</td><td>${r.time.toFixed(1)}</td><td>${r.accuracy}</td></tr>`;
+        });
+        html += '</table><br><button onclick="downloadCSV()">下載 CSV</button>';
+        return html;
+      },
+      choices: ['結束']
+    });
 
-  jsPsych.run(timeline);
-</script>
+    function toggleSelection(el) {
+      el.classList.toggle('selected');
+    }
+
+    function downloadCSV() {
+      let csv = 'Letter,Correct,Target Total,Time,Accuracy\n';
+      results.forEach(r => {
+        csv += `${r.letter},${r.correct},${r.targetTotal},${r.time.toFixed(1)},${r.accuracy}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'letter_search_results.csv';
+      a.click();
+    }
+
+    jsPsych.init({ timeline });
+  </script>
+</body>
 </html>
