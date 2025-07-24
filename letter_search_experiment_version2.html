@@ -132,7 +132,7 @@
       type: jsPsychHtmlButtonResponse,
       stimulus: function () {
         clickedASet.clear();
-        let html = `<div class="word-box">目標字母：${page.letter}</div><div class="monofont">`;
+        let html = `<div class="word-box">Target Letter：${page.letter}</div><div class="monofont">`;
         page.text.forEach((line, i) => {
           html += '<div class="letter-line">';
           for (let j = 0; j < line.length; j++) {
@@ -142,10 +142,10 @@
           }
           html += '</div>'; // ✅ 每行結束
         });
-        html += `</div><br><strong>第 ${index + 1} / 26 篇文章</strong>`;
+        html += `</div><br><strong>Page ${index + 1}`;
         return html;
       },
-      choices: ['繼續'],
+      choices: ['Continue'],
       trial_duration: 90000, // ✅ 每頁 90 秒
       on_finish: function (data) {
         const correctCount = clickedASet.size;
@@ -162,7 +162,7 @@
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
       const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-      let html = '<h3>Result</h3><table border="1" cellpadding="5"><tr><th>字母</th><th>答對數</th><th>應找數</th><th>準確率</th></tr>';
+      let html = '<h3>Result</h3><table border="1" cellpadding="5"><tr><th>Target</th><th>Correct</th><th>Answer</th><th>Accuracy</th></tr>';
       trials.forEach(t => {
         if (t.page_index) {
           html += `<tr><td>${t.letter}</td><td>${t.user_answer}</td><td>${t.correct_answer}</td><td>${t.accuracy}%</td></tr>`;
