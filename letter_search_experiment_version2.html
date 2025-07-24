@@ -80,8 +80,7 @@
     return { text: result.lines, answer: result.answer, letter: letter };
   });
 
-  // ✅ 固定內容：產生 25 行 × 45 字（含指定數量目標字母）
- function generateFixedPageText(targetLetter = 'A', totalTargets = 12) {
+  function generateFixedPageText(targetLetter = 'A', totalTargets = 12) {
     const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
     const nonTargetChars = allChars.replace(targetLetter, '');
     const lineLength = 45;
@@ -93,12 +92,23 @@
     for (const pos of targetPos) content[pos] = targetLetter;
     for (let i = 0; i < content.length; i++) if (!content[i]) content[i] = randomChar(nonTargetChars);
 
-    const lines = [];
+    const lines = []; /* ✅ 準備儲存 25 行文章 */
     for (let i = 0; i < totalLines; i++) {
       const line = content.slice(i * lineLength, (i + 1) * lineLength);
-      if (line[0] === ' ') line[0] = randomChar(nonTargetChars);
-      if (line[44] === ' ') line[44] = randomChar(nonTargetChars);
-      lines.push(line.join(''));
+
+      // ✅ 在非目標字元中插入更多空格以模擬自然英文
+      const spaceCount = Math.floor(Math.random() * 4) + 3; // 每行大約 3~6 個空格
+      for (let s = 0; s < spaceCount; s++) {
+        let insertIndex;
+        do {
+          insertIndex = Math.floor(Math.random() * (lineLength - 2)) + 1; // 避免開頭與結尾
+        } while (line[insertIndex] === ' ');
+        line[insertIndex] = ' ';
+      }
+
+      if (line[0] === ' ') line[0] = randomChar(nonTargetChars); /* ✅ 確保行首不是空格 */
+      if (line[44] === ' ') line[44] = randomChar(nonTargetChars); /* ✅ 確保行尾不是空格 */
+      lines.push(line.join('')); /* ✅ 加入一行 */
     }
     return { lines, answer: totalTargets };
   }
@@ -120,7 +130,7 @@
       type: jsPsychHtmlButtonResponse,
       stimulus: function () {
         clickedASet.clear();
-        let html = `<div style="font-size: 14px;"><div class="word-box"><strong>Target Letter</strong>: ${page.letter}</div><div class="monofont">`;
+        let html = `<div class="word-box">Target Letter: ${page.letter}</div><div class="monofont">`;
         page.text.forEach((line, i) => {
           html += '<div class="letter-line">';
           for (let j = 0; j < line.length; j++) {
@@ -130,7 +140,7 @@
           }
           html += '</div>'; /* ✅ 每行結束 */
         });
-        html += `</div><br><strong>Page ${index + 1}</strong>`;
+        html += `</div><br><strong>Page ${index + 1} / 26</strong>`;
         return html;
       },
       choices: ['Next'],
@@ -152,11 +162,11 @@
     });
   });
 
- timeline.push({
+  timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
       const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-      let html = '<h3>Summary</h3><table border="1" cellpadding="5"><tr><th>Page</th><th>Letter</th><th>Correct</th><th>Target</th><th>Accuracy</th><th>Time (s)</th></tr>';
+      let html = '<h3 style="text-align:center">Summary</h3><div style="display:flex;justify-content:center;"><table border="1" cellpadding="5"><tr>'<th>Page</th><th>Letter</th><th>Correct</th><th>Target</th><th>Accuracy</th><th>Time (s)</th></tr>';
       let totalCorrect = 0, totalTarget = 0, totalTime = 0;
       trials.forEach(t => {
         if (t.page_index) {
@@ -168,7 +178,7 @@
       });
       const totalAccuracy = ((totalCorrect / totalTarget) * 100).toFixed(1);
       html += `<tr><th>Total</th><td></td><td>${totalCorrect}</td><td>${totalTarget}</td><td>${totalAccuracy}%</td><td>${totalTime.toFixed(2)}</td></tr>`;
-      html += '</table><br><button onclick="downloadCSV()">Download CSV</button>';
+      html += '</table></div><br><div style="text-align:center"><button onclick="downloadCSV()">Download CSV</button></div>' onclick="downloadCSV()">Download CSV</button>';
       return html;
     },
     choices: ['Finish']
@@ -212,4 +222,3 @@
   jsPsych.run(timeline); /* ✅ 啟動實驗流程 */
 </script>
 </html>
-
