@@ -247,6 +247,7 @@
 
 function downloadCSV() {
     const rows = window.summaryData;
+    const totals = window.summaryTotals;
     if (!rows || rows.length === 0) return;
     const header = Object.keys(rows[0]);
     const csv = [header.join(",")].concat(
