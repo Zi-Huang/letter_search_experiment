@@ -19,7 +19,6 @@
       display: flex; /* 使用 flex 排版 */
       flex-direction: column; /* 垂直排列子元素 */
       align-items: center; /* 子元素水平置中 */
-      justify-content: center; /* 子元素垂直置中，確保不需滑動即可看到全部 */
       padding: 2vh 0; /* 上下留白 2% 高度 */
       height: 100vh; /* 限制視窗高度防止過高內容跑出來 */
     }
@@ -58,17 +57,10 @@
       width: 100%;  /* ✅ 根據裝置寬度縮放 */
       overflow-x: hidden;                
     }
-   
   </style>
 </head>
 <body>
   <div id="result-container"></div> <!-- 顯示結果與下載按鈕的容器 -->
-  <!-- ✅ 測試按鈕排版：頁碼與 Continue 並排 -->
-  <div class="button-row">
-    <div class="page-label">Page 1</div> <!-- 這裡的頁碼可由 JS 動態更新 -->
-    <button class="jspsych-btn">Continue</button>
-  </div>
-
 </body>
 <script>
   const jsPsych = initJsPsych({
