@@ -1,16 +1,16 @@
-<!DOCTYPE html> <!-- 宣告 HTML5 文件類型 -->
-<html lang="en"> <!-- 設定語言為英文 -->
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" /> <!-- 設定字元編碼 -->
-  <title>Letter Search Experiment</title> <!-- 網頁標題 -->
-  <script src="jspsych.js"></script> <!-- 載入 jsPsych 核心腳本 -->
-  <script src="plugin-html-button-response.js"></script> <!-- 載入 html-button-response 插件 -->
-  <link href="jspsych.css" rel="stylesheet" /> <!-- 載入 jsPsych 樣式表 -->
+  <meta charset="UTF-8" />
+  <title>Letter Search Experiment</title>
+  <script src="jspsych.js"></script>
+  <script src="plugin-html-button-response.js"></script>
+  <link href="jspsych.css" rel="stylesheet" />
   <style>
     html, body {
       margin: 0;
-      padding: 0px;
-      overflow-x: hidden; /* ✅ 防止畫面橫向捲動 */
+      padding: 0;
+      overflow-x: hidden;
       box-sizing: border-box;
     }
     body {
@@ -44,7 +44,7 @@
       color: black;
     }
     .letter-line {
-      margin-bottom: 3.5px; /* ✅ 每行底部間距 */
+      margin-bottom: 3.5px;
       white-space: pre;
     }
     .monofont {
@@ -56,192 +56,176 @@
       width: 100%;
       overflow-x: hidden;
     }
+    .summary-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
-  <div id="result-container" style="text-align: center;"></div> <!-- ✅ 顯示結果區塊，置中顯示 -->
+  <div id="result-container"></div>
 </body>
 <script>
-const jsPsych = initJsPsych({
-  on_finish: () => jsPsych.data.displayData()
-});
-const clickedASet = new Set();
+  const jsPsych = initJsPsych({
+    on_finish: () => jsPsych.data.displayData()
+  });
 
-const totalTargets = 320;
-const minTargetsPerPage = 8;
-const maxTargetsPerPage = 16;
-const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const pages = [];
+  const totalTargets = 320;
+  const clickedCorrectTimes = {}; // ✅ 儲存每頁正確字母點擊時間
+  const clickedWrongTimes = {}; // ✅ 儲存錯誤點擊時間
 
-function distributeTargets(total, pages, min, max) {
-  const arr = Array(pages).fill(min);
-  let remaining = total - min * pages;
-  while (remaining > 0) {
-    const i = Math.floor(Math.random() * pages);
-    if (arr[i] < max) {
-      arr[i]++;
-      remaining--;
-    }
-  }
-  return arr;
-}
-
-function generateFixedPage(letter, count) {
-  const lineCount = 25;
-  const lineLength = 45;
-  const nonTarget = letters.replace(letter, '');
-  const lines = [];
-  const targetPositions = {};
-  while (count > 0) {
-    const row = Math.floor(Math.random() * lineCount);
-    const col = Math.floor(Math.random() * lineLength);
-    if (!targetPositions[row]) targetPositions[row] = new Set();
-    if (targetPositions[row].size < 2 && !targetPositions[row].has(col)) {
-      targetPositions[row].add(col);
-      count--;
-    }
-  }
-  for (let i = 0; i < lineCount; i++) {
-    const chars = [];
-    for (let j = 0; j < lineLength; j++) {
-      if (targetPositions[i] && targetPositions[i].has(j)) {
-        chars.push(letter);
-      } else {
-        if (j > 0 && j < lineLength - 1 && Math.random() < 0.15) {
-          chars.push(' ');
-        } else {
-          chars.push(nonTarget[Math.floor(Math.random() * nonTarget.length)]);
-        }
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').sort(() => Math.random() - 0.5);
+  function generateDistribution(targetTotal = 320, pageCount = 26, min = 8, max = 16) {
+    let dist = Array(pageCount).fill(min);
+    let remaining = targetTotal - min * pageCount;
+    while (remaining > 0) {
+      const idx = Math.floor(Math.random() * pageCount);
+      if (dist[idx] < max) {
+        dist[idx]++;
+        remaining--;
       }
     }
-    if (chars[0] === ' ') chars[0] = nonTarget[Math.floor(Math.random() * nonTarget.length)];
-    if (chars[lineLength - 1] === ' ') chars[lineLength - 1] = nonTarget[Math.floor(Math.random() * nonTarget.length)];
-    lines.push(chars.join(''));
+    return dist;
   }
-  return { lines: lines, answer: Array.from(Object.values(targetPositions)).reduce((a, b) => a + b.size, 0) };
-}
+  const distribution = generateDistribution(320, 26, 8, 16);
 
-const targetsPerPage = distributeTargets(totalTargets, 26, minTargetsPerPage, maxTargetsPerPage);
-const letterSequence = letters.split('').sort(() => Math.random() - 0.5);
-letterSequence.forEach((letter, i) => {
-  const page = generateFixedPage(letter, targetsPerPage[i]);
-  pages.push({
-    text: page.lines,
-    answer: page.answer,
-    target: letter
+  const pages = alphabet.map((letter, idx) => {
+    const result = generateFixedPageText(letter, distribution[idx]);
+    return { text: result.lines, answer: result.answer, letter: letter };
   });
-});
 
-const timeline = [];
+  function generateFixedPageText(targetLetter = 'A', totalTargets = 12) {
+    const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
+    const nonTargetChars = allChars.replace(targetLetter, '');
+    const lineLength = 45;
+    const totalLines = 25;
+    const content = Array(lineLength * totalLines).fill('');
 
-timeline.push({
-  type: jsPsychHtmlButtonResponse,
-  stimulus: `
-    <h2>Letter Search Task</h2>
-    <p>You will see 26 pages of text. Each page asks you to find a target letter (e.g., A, B...).<br>
-    Click all instances of the target letter. You have 90 seconds per page.<br>Click "Start" to begin.</p>`,
-  choices: ['Start']
-});
+    const positions = [...Array(lineLength * totalLines).keys()];
+    const targetPos = positions.sort(() => Math.random() - 0.5).slice(0, totalTargets);
+    for (const pos of targetPos) content[pos] = targetLetter;
+    for (let i = 0; i < content.length; i++) if (!content[i]) content[i] = randomChar(nonTargetChars);
 
-pages.forEach((pageData, index) => {
-  const page = pageData; // ✅ 使用閉包確保正確引用
+    const lines = [];
+    for (let i = 0; i < totalLines; i++) {
+      const line = content.slice(i * lineLength, (i + 1) * lineLength);
+      if (line[0] === ' ') line[0] = randomChar(nonTargetChars);
+      if (line[44] === ' ') line[44] = randomChar(nonTargetChars);
+      lines.push(line.join(''));
+    }
+    return { lines, answer: totalTargets };
+  }
+
+  function randomChar(set) {
+    return set[Math.floor(Math.random() * set.length)];
+  }
+
+  const timeline = [];
+
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    on_start: function(trial){ trial.data.startTime = performance.now(); },
-    stimulus: function () {
-      clickedASet.clear();
-      let html = `<div><h3>Find all letters: ${page.target}</h3><div class="monofont">`;
-      page.text.forEach((line, i) => {
-        html += '<div class="letter-line">';
-        for (let j = 0; j < line.length; j++) {
-          const char = line[j];
-          const id = `char_${index}_${i}_${j}`;
-          html += `<span id="${id}" class="letter-button" data-char="${char}" onclick="toggleLetter('${id}', '${char}', '${page.target}')">${char}</span>`;
-        }
-        html += '</div>'; /* ✅ 每行底部間距調整 */
-      });
-      html += `</div><br><strong>Page ${index + 1} of 26</strong>`;
-      return html;
-    },
-    choices: ['Continue'],
-    trial_duration: 90000,
-    on_finish: function (data) {
-      const end = performance.now();
-      let correctCount = clickedASet.size;
-      data.user_answer = correctCount;
-      data.correct_answer = page.answer;
-      data.correct = (correctCount === page.answer);
-      data.correct_diff = Math.min(correctCount, page.answer);
-      data.page_index = index + 1;
-      data.page_time_sec = Math.round((end - data.startTime) / 1000);
-      data.page_accuracy = ((data.correct_diff / data.correct_answer) * 100).toFixed(1);
-      data.target_letter = page.target;
-    }
+    stimulus: `<h2>Letter Search Task</h2><p>You will see 26 fixed texts. Each page has a target letter (A-Z).<br>Click all target letters within 90 seconds.</p>`,
+    choices: ['Start']
   });
-});
 
-timeline.push({
-  type: jsPsychHtmlButtonResponse,
-  stimulus: function () {
-    const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-    let html = '<div style="text-align:center"><h2>Results</h2><table border="1" style="margin:auto"><tr><th>Page</th><th>Target</th><th>Answer</th><th>Correct</th><th>Time (s)</th><th>Accuracy (%)</th></tr>';
-    let totalCorrect = 0, totalAnswer = 0, totalTime = 0;
-    const summary = [];
-    trials.forEach(t => {
-      if (t.page_index) {
-        const matched = Math.min(t.user_answer, t.correct_answer);
-        const acc = ((matched / t.correct_answer) * 100).toFixed(1);
-        totalCorrect += matched;
-        totalAnswer += t.correct_answer;
-        totalTime += t.page_time_sec;
-        html += `<tr><td>${t.page_index}</td><td>${t.target_letter}</td><td>${t.correct_answer}</td><td>${matched}</td><td>${t.page_time_sec}</td><td>${acc}</td></tr>`;
-        summary.push({Page: t.page_index, Target: t.target_letter, Answer: t.correct_answer, Correct: matched, "Time (sec)": t.page_time_sec, "Accuracy (%)": acc});
+  pages.forEach((page, index) => {
+    clickedCorrectTimes[index] = [];
+    clickedWrongTimes[index] = [];
+    timeline.push({
+      type: jsPsychHtmlButtonResponse,
+      stimulus: function () {
+        let html = `<div style="font-size: 22px;"><div class="word-box"><strong>Target Letter: ${page.letter}</strong></div><div class="monofont">`;
+        page.text.forEach((line, i) => {
+          html += '<div class="letter-line">';
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            const id = `char_${index}_${i}_${j}`;
+            html += `<span id="${id}" class="letter-button" data-char="${char}" onclick="toggleLetter('${id}', '${char}', '${page.letter}', ${index})">${char}</span>`;
+          }
+          html += '</div>';
+        });
+        html += `</div><br><strong>Page ${index + 1}</strong>`;
+        return html;
+      },
+      choices: ['Next'],
+      trial_duration: 90000,
+      on_start: function (trial) {
+        trial.data = { startTime: performance.now() };
+      },
+      on_finish: function (data) {
+        const correctClicks = clickedCorrectTimes[index] || [];
+        const time = correctClicks.length > 0 ? Math.max(...correctClicks) : 0;
+        data.page_index = index + 1;
+        data.letter = page.letter;
+        data.correct_answer = page.answer;
+        data.user_answer = correctClicks.length;
+        data.accuracy = ((correctClicks.length / page.answer) * 100).toFixed(1);
+        data.time = time.toFixed(2);
       }
     });
-    const overallAcc = ((totalCorrect / totalAnswer) * 100).toFixed(1);
-    html += `</table><p><strong>Total: ${totalCorrect}/${totalAnswer}</strong><br>Total Time: ${totalTime}s<br>Overall Accuracy: ${overallAcc}%</p>`;
-    html += `<br><button onclick="downloadCSV()">📥 Download CSV</button></div>`;
-    window.summaryData = summary;
-    window.summaryTotals = { totalCorrect, totalAnswer, totalTime, overallAcc };
-    return html;
-  },
-  choices: ['Finish']
-});
+  });
 
-function toggleLetter(id, char, target) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  if (el.classList.contains('letter-selected-correct')) {
-    el.classList.remove('letter-selected-correct');
-    clickedASet.delete(id);
-  } else {
-    if (char === target) {
-      el.classList.add('letter-selected-correct');
-      clickedASet.add(id);
+  timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: function () {
+      const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
+      let html = '<div class="summary-wrapper"><div><h3 style="text-align:center">Summary</h3><table border="1" cellpadding="5"><tr><th>Page</th><th>Letter</th><th>Correct</th><th>Target</th><th>Accuracy</th><th>Time (s)</th></tr>';
+      let totalCorrect = 0, totalTarget = 0, totalTime = 0;
+      trials.forEach(t => {
+        if (t.page_index) {
+          totalCorrect += t.user_answer;
+          totalTarget += t.correct_answer;
+          totalTime += parseFloat(t.time);
+          html += `<tr><td>${t.page_index}</td><td>${t.letter}</td><td>${t.user_answer}</td><td>${t.correct_answer}</td><td>${t.accuracy}%</td><td>${t.time}</td></tr>`;
+        }
+      });
+      const totalAccuracy = ((totalCorrect / totalTarget) * 100).toFixed(1);
+      html += `<tr><th>Total</th><td></td><td>${totalCorrect}</td><td>${totalTarget}</td><td>${totalAccuracy}%</td><td>${totalTime.toFixed(2)}</td></tr>`;
+      html += '</table><br><button onclick="downloadCSV()">Download CSV</button></div></div>';
+      return html;
+    },
+    choices: ['Finish']
+  });
+
+  function toggleLetter(id, char, target, index) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const now = (performance.now() - jsPsych.startTime) / 1000;
+    if (el.classList.contains('letter-selected-correct')) {
+      el.classList.remove('letter-selected-correct');
+    } else {
+      if (char === target) {
+        el.classList.add('letter-selected-correct');
+        clickedCorrectTimes[index].push(now);
+      } else {
+        clickedWrongTimes[index].push(now);
+      }
     }
   }
-}
 
-function downloadCSV() {
-  const rows = window.summaryData;
-  const totals = window.summaryTotals;
-  if (!rows || !rows.length) return;
-  const header = Object.keys(rows[0]);
-  let csv = [header.join(",")].concat(rows.map(r => header.map(h => r[h]).join(","))).join("\n");
-  if (totals) {
-    csv += `\nTotal, ,${totals.totalAnswer},${totals.totalCorrect},${totals.totalTime},${totals.overallAcc}%`;
+  function downloadCSV() {
+    const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
+    let csv = 'Page,Letter,Correct,Target,Accuracy,Time\n';
+    let totalCorrect = 0, totalTarget = 0, totalTime = 0;
+    trials.forEach(t => {
+      if (t.page_index) {
+        totalCorrect += t.user_answer;
+        totalTarget += t.correct_answer;
+        totalTime += parseFloat(t.time);
+        csv += `${t.page_index},${t.letter},${t.user_answer},${t.correct_answer},${t.accuracy}%,${t.time}\n`;
+      }
+    });
+    const totalAccuracy = ((totalCorrect / totalTarget) * 100).toFixed(1);
+    csv += `Total,,${totalCorrect},${totalTarget},${totalAccuracy}%,${totalTime.toFixed(2)}\n`;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'letter_search_result.csv';
+    a.click();
   }
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `letter_search_${Date.now()}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
 
-jsPsych.run(timeline);
+  jsPsych.startTime = performance.now();
+  jsPsych.run(timeline);
 </script>
 </html>
