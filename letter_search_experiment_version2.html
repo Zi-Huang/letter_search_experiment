@@ -83,6 +83,7 @@
 
   // ✅ 固定每個字母的出現數量
   const fixedTargetDistribution = [11, 15, 10, 12, 9, 13, 12, 11, 14, 13, 9, 10, 14, 11, 13, 12, 8, 10, 14, 9, 11, 12, 8, 10, 11, 12];
+  console.log("🎯 目標總數 =", fixedTargetDistribution.reduce((a, b) => a + b, 0)); // ✅ 印出總和是否為 320
 
   // ✅ 隨機打亂字母順序（對應頁面順序）
   const shuffledLetters = [...alphabet].sort(() => Math.random() - 0.5);
