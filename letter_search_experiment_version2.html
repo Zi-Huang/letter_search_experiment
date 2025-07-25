@@ -75,28 +75,22 @@
     on_finish: () => jsPsych.data.displayData()
   });
 
-  const totalTargets = 320;
-  const clickedCorrectTimes = {};
-  const clickedWrongTimes = {};
-  const clickedDetails = {}; // ✅ 新增：紀錄點擊詳情
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const totalTargets = 320; // ✅ 目標字母總數
+  const clickedCorrectTimes = {}; // ✅ 每頁正確點擊時間
+  const clickedWrongTimes = {}; // ✅ 每頁錯誤點擊時間
+  const clickedDetails = {}; // ✅ 每頁所有點擊細節
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''); // ✅ 字母陣列
 
-  const targetDistribution = (() => {
-    const base = Array(26).fill(8);
-    let remaining = totalTargets - 8 * 26;
-    while (remaining > 0) {
-      const i = Math.floor(Math.random() * 26);
-      if (base[i] < 16) {
-        base[i]++;
-        remaining--;
-      }
-    }
-    return base;
-  })();
+  // ✅ 固定每個字母的出現數量
+  const fixedTargetDistribution = [11, 15, 10, 12, 9, 13, 12, 11, 14, 13, 9, 10, 14, 11, 13, 12, 8, 10, 14, 9, 11, 12, 8, 10, 11, 12];
 
-  const fixedArticles = {};
-  const fixedSeeds = {};
+  // ✅ 隨機打亂字母順序（對應頁面順序）
+  const shuffledLetters = [...alphabet].sort(() => Math.random() - 0.5);
 
+  const fixedArticles = {}; // ✅ 每個字母對應的固定文章內容
+  const fixedSeeds = {}; // ✅ 每個字母對應的亂數種子
+
+  // ✅ 建立特定字母的假文章內容（固定種子）
   function generateFixedText(letter, count, seed) {
     const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
     const nonTargetChars = allChars.replace(letter, '');
@@ -127,18 +121,19 @@
     }
   }
 
+  // ✅ 為每個字母建立文章
   alphabet.forEach((letter, i) => {
     const seed = i + 1;
     fixedSeeds[letter] = seed;
-    fixedArticles[letter] = generateFixedText(letter, targetDistribution[i], seed);
+    fixedArticles[letter] = generateFixedText(letter, fixedTargetDistribution[i], seed);
   });
 
-  const pages = alphabet.map(letter => {
-    const content = fixedArticles[letter];
+  // ✅ 頁面資料配對（順序已打亂）
+  const pages = shuffledLetters.map(letter => {
     return {
       letter,
-      text: content.lines,
-      answer: content.answer
+      text: fixedArticles[letter].lines,
+      answer: fixedArticles[letter].answer
     };
   });
 
@@ -210,6 +205,7 @@
     choices: ['Finish']
   });
 
+  // ✅ 點擊標記正確與否
   function toggleLetter(id, char, target, index) {
     const el = document.getElementById(id);
     if (!el || el.classList.contains('letter-selected-correct') || el.classList.contains('letter-selected-wrong')) return;
@@ -224,6 +220,7 @@
     clickedDetails[index].push({ char, time: now.toFixed(2), isCorrect: char === target });
   }
 
+  // ✅ 匯出 CSV：總結表＋點擊詳情表
   function downloadCSV() {
     const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
     let summary = 'Page,Letter,Correct,Target,Accuracy,Time\n';
