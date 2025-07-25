@@ -44,7 +44,7 @@
       color: black;
     }
     .letter-line {
-      margin-bottom: 3.5px;
+      margin-bottom: 3.5px; /* ✅ 每行底部間距調整 */
       white-space: pre;
     }
     .monofont {
@@ -64,11 +64,11 @@
   </style>
 </head>
 <body>
-  <div id="result-container"></div>
+  <div id="result-container"></div> <!-- ✅ 顯示結果區塊 -->
 </body>
 <script>
   const jsPsych = initJsPsych({
-    on_finish: () => jsPsych.data.displayData()
+    on_finish: () => jsPsych.data.displayData() // ✅ 結束時顯示資料
   });
 
   const totalTargets = 320; // ✅ 目標字母總數
@@ -96,27 +96,27 @@
     const nonTargetChars = allChars.replace(letter, '');
     const lineLength = 45;
     const totalLines = 25;
-    const content = Array(lineLength * totalLines).fill('');
-    const positions = [...Array(lineLength * totalLines).keys()];
-    const targetPos = positions.sort(() => Math.random() - 0.5).slice(0, count);
-    for (const pos of targetPos) content[pos] = letter;
-    for (let i = 0; i < content.length; i++) if (!content[i]) content[i] = randomChar(nonTargetChars);
+    const content = Array(lineLength * totalLines).fill(''); // ✅ 初始化空內容陣列
+    const positions = [...Array(lineLength * totalLines).keys()]; // ✅ 產生所有索引位置
+    const targetPos = positions.sort(() => Math.random() - 0.5).slice(0, count); // ✅ 隨機放置目標字母位置
+    for (const pos of targetPos) content[pos] = letter; // ✅ 插入目標字母
+    for (let i = 0; i < content.length; i++) if (!content[i]) content[i] = randomChar(nonTargetChars); // ✅ 插入其他字元
     const lines = [];
     for (let i = 0; i < totalLines; i++) {
       const line = content.slice(i * lineLength, (i + 1) * lineLength);
-      if (line[0] === ' ') line[0] = randomChar(nonTargetChars);
-      if (line[44] === ' ') line[44] = randomChar(nonTargetChars);
+      while (line[0] === ' ') line[0] = randomChar(nonTargetChars); // ✅ 避免開頭為空格
+      while (line[lineLength - 1] === ' ') line[lineLength - 1] = randomChar(nonTargetChars); // ✅ 避免結尾為空格
       lines.push(line.join(''));
     }
     return { lines, answer: count };
   }
 
   function randomChar(set) {
-    return set[Math.floor(Math.random() * set.length)];
+    return set[Math.floor(Math.random() * set.length)]; // ✅ 從指定集合中隨機選一個字元
   }
 
   alphabet.forEach((letter, i) => {
-    fixedArticles[letter] = generateFixedText(letter, targetDistribution[i]);
+    fixedArticles[letter] = generateFixedText(letter, targetDistribution[i]); // ✅ 為每個目標字母產生對應的固定文章
   });
 
   const pages = alphabet.map(letter => {
@@ -128,12 +128,12 @@
     };
   });
 
-  const timeline = [];
+  const timeline = []; // ✅ jsPsych 的時序流程陣列
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h2>Letter Search Task</h2><p>You will see 26 fixed texts. Each page has a target letter (A-Z).<br>Click all target letters within 90 seconds.</p>`,
-    choices: ['Start']
+    choices: ['Start'] // ✅ 開始按鈕
   });
 
   pages.forEach((page, index) => {
@@ -156,13 +156,13 @@
         return html;
       },
       choices: ['Next'],
-      trial_duration: 90000,
+      trial_duration: 90000, // ✅ 每頁限制 90 秒
       on_start: function () {
-        jsPsych.data.get().addToLast({ startTime: performance.now() });
+        window.trialStartTime = performance.now(); // ✅ 每頁開始記錄時間
       },
       on_finish: function (data) {
         const clicks = clickedCorrectTimes[index] || [];
-        const searchTime = clicks.length > 0 ? Math.max(...clicks) : 0;
+        const searchTime = clicks.length > 0 ? Math.max(...clicks) : 0; // ✅ 取得最後一次正確點擊時間
         data.page_index = index + 1;
         data.letter = page.letter;
         data.correct_answer = page.answer;
@@ -192,21 +192,21 @@
       html += '</table><br><button onclick="downloadCSV()">Download CSV</button></div></div>';
       return html;
     },
-    choices: ['Finish']
+    choices: ['Finish'] // ✅ 完成按鈕
   });
 
   function toggleLetter(id, char, target, index) {
     const el = document.getElementById(id);
     if (!el) return;
-    const now = (performance.now() - jsPsych.startTime) / 1000;
+    const now = (performance.now() - window.trialStartTime) / 1000; // ✅ 當前點擊秒數
     if (el.classList.contains('letter-selected-correct')) {
-      el.classList.remove('letter-selected-correct');
+      el.classList.remove('letter-selected-correct'); // ✅ 取消標記
     } else {
       if (char === target) {
         el.classList.add('letter-selected-correct');
-        clickedCorrectTimes[index].push(now);
+        clickedCorrectTimes[index].push(now); // ✅ 記錄正確點擊時間
       } else {
-        clickedWrongTimes[index].push(now);
+        clickedWrongTimes[index].push(now); // ✅ 記錄錯誤點擊時間
       }
     }
   }
@@ -232,7 +232,6 @@
     a.click();
   }
 
-  jsPsych.startTime = performance.now(); // ✅ 記錄起始時間
-  jsPsych.run(timeline);
+  jsPsych.run(timeline); // ✅ 啟動實驗流程
 </script>
 </html>
