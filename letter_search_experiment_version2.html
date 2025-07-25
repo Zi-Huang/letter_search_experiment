@@ -71,18 +71,16 @@
   <div id="result-container"></div>
 </body>
 <script>
-  // ✅ 初始化 jsPsych 並定義完成時顯示資料
   const jsPsych = initJsPsych({
     on_finish: () => jsPsych.data.displayData()
   });
 
-  const totalTargets = 320; // ✅ 總共目標字母數
-  const clickedCorrectTimes = {}; // ✅ 各頁正確點擊時間紀錄
-  const clickedWrongTimes = {};   // ✅ 各頁錯誤點擊時間紀錄
-  const clickedDetails = {};      // ✅ 各頁所有點擊詳情紀錄
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(); // ✅ 26 個字母陣列
+  const totalTargets = 320;
+  const clickedCorrectTimes = {};
+  const clickedWrongTimes = {};
+  const clickedDetails = {}; // ✅ 新增：紀錄點擊詳情
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-  // ✅ 分配 320 個目標字母到 26 個字母中（每個 8~16 個）
   const targetDistribution = (() => {
     const base = Array(26).fill(8);
     let remaining = totalTargets - 8 * 26;
@@ -96,10 +94,9 @@
     return base;
   })();
 
-  const fixedArticles = {}; // ✅ 每個字母對應固定文章內容
-  const fixedSeeds = {};    // ✅ 每個字母對應固定種子值
+  const fixedArticles = {};
+  const fixedSeeds = {};
 
-  // ✅ 產生固定文章函式
   function generateFixedText(letter, count, seed) {
     const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
     const nonTargetChars = allChars.replace(letter, '');
@@ -121,7 +118,6 @@
     return { lines, answer: count };
   }
 
-  // ✅ 固定亂數函式
   function mulberry32(a) {
     return function () {
       a |= 0; a = a + 0x6D2B79F5 | 0;
@@ -131,14 +127,12 @@
     }
   }
 
-  // ✅ 將每個字母生成對應固定文章
   alphabet.forEach((letter, i) => {
     const seed = i + 1;
     fixedSeeds[letter] = seed;
     fixedArticles[letter] = generateFixedText(letter, targetDistribution[i], seed);
   });
 
-  // ✅ 將 26 頁內容整理為 timeline 格式
   const pages = alphabet.map(letter => {
     const content = fixedArticles[letter];
     return {
@@ -149,15 +143,12 @@
   });
 
   const timeline = [];
-
-  // ✅ 開始介紹頁
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h2>Letter Search Task</h2><p>You will see 26 fixed texts. Each page has a target letter (A-Z).<br>Click all target letters within 90 seconds.</p>`,
     choices: ['Start']
   });
 
-  // ✅ 每篇搜尋任務頁面設定
   pages.forEach((page, index) => {
     clickedCorrectTimes[index] = [];
     clickedWrongTimes[index] = [];
@@ -197,7 +188,6 @@
     });
   });
 
-  // ✅ 結果總結頁
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
@@ -220,7 +210,6 @@
     choices: ['Finish']
   });
 
-  // ✅ 點擊邏輯處理：標記正確/錯誤並紀錄時間
   function toggleLetter(id, char, target, index) {
     const el = document.getElementById(id);
     if (!el || el.classList.contains('letter-selected-correct') || el.classList.contains('letter-selected-wrong')) return;
@@ -235,7 +224,6 @@
     clickedDetails[index].push({ char, time: now.toFixed(2), isCorrect: char === target });
   }
 
-  // ✅ 匯出 CSV 檔案，分為兩段：結果統計表與點擊詳情表
   function downloadCSV() {
     const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
     let summary = 'Page,Letter,Correct,Target,Accuracy,Time\n';
@@ -263,7 +251,6 @@
     a.click();
   }
 
-  // ✅ 執行實驗流程
   jsPsych.run(timeline);
 </script>
 </html>
