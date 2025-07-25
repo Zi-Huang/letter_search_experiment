@@ -89,34 +89,42 @@
     return base;
   })();
 
-  const fixedArticles = {}; // ✅ 預先產生每個字母對應的假文章
+  const fixedArticles = {};
+  const fixedSeeds = {};
 
-  function generateFixedText(letter, count) {
+  function generateFixedText(letter, count, seed) {
     const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
     const nonTargetChars = allChars.replace(letter, '');
     const lineLength = 45;
     const totalLines = 25;
-    const content = Array(lineLength * totalLines).fill(''); // ✅ 初始化空內容陣列
-    const positions = [...Array(lineLength * totalLines).keys()]; // ✅ 產生所有索引位置
-    const targetPos = positions.sort(() => Math.random() - 0.5).slice(0, count); // ✅ 隨機放置目標字母位置
-    for (const pos of targetPos) content[pos] = letter; // ✅ 插入目標字母
-    for (let i = 0; i < content.length; i++) if (!content[i]) content[i] = randomChar(nonTargetChars); // ✅ 插入其他字元
+    const content = Array(lineLength * totalLines).fill('');
+    const rng = mulberry32(seed);
+    const positions = [...Array(lineLength * totalLines).keys()].sort(() => rng() - 0.5).slice(0, count);
+    for (const pos of positions) content[pos] = letter;
+    for (let i = 0; i < content.length; i++) if (!content[i]) content[i] = nonTargetChars[Math.floor(rng() * nonTargetChars.length)];
     const lines = [];
     for (let i = 0; i < totalLines; i++) {
       const line = content.slice(i * lineLength, (i + 1) * lineLength);
-      while (line[0] === ' ') line[0] = randomChar(nonTargetChars); // ✅ 避免開頭為空格
-      while (line[lineLength - 1] === ' ') line[lineLength - 1] = randomChar(nonTargetChars); // ✅ 避免結尾為空格
+      while (line[0] === ' ') line[0] = nonTargetChars[Math.floor(rng() * nonTargetChars.length)];
+      while (line[lineLength - 1] === ' ') line[lineLength - 1] = nonTargetChars[Math.floor(rng() * nonTargetChars.length)];
       lines.push(line.join(''));
     }
     return { lines, answer: count };
   }
 
-  function randomChar(set) {
-    return set[Math.floor(Math.random() * set.length)]; // ✅ 從指定集合中隨機選一個字元
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
   }
 
   alphabet.forEach((letter, i) => {
-    fixedArticles[letter] = generateFixedText(letter, targetDistribution[i]); // ✅ 為每個目標字母產生對應的固定文章
+    const seed = i + 1; // ✅ 固定種子確保每次一樣內容
+    fixedSeeds[letter] = seed;
+    fixedArticles[letter] = generateFixedText(letter, targetDistribution[i], seed);
   });
 
   const pages = alphabet.map(letter => {
@@ -128,12 +136,11 @@
     };
   });
 
-  const timeline = []; // ✅ jsPsych 的時序流程陣列
-
+  const timeline = [];
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h2>Letter Search Task</h2><p>You will see 26 fixed texts. Each page has a target letter (A-Z).<br>Click all target letters within 90 seconds.</p>`,
-    choices: ['Start'] // ✅ 開始按鈕
+    choices: ['Start']
   });
 
   pages.forEach((page, index) => {
@@ -156,19 +163,21 @@
         return html;
       },
       choices: ['Next'],
-      trial_duration: 90000, // ✅ 每頁限制 90 秒
+      trial_duration: 90000,
       on_start: function () {
-        window.trialStartTime = performance.now(); // ✅ 每頁開始記錄時間
+        window.trialStartTime = performance.now();
       },
       on_finish: function (data) {
         const clicks = clickedCorrectTimes[index] || [];
-        const searchTime = clicks.length > 0 ? Math.max(...clicks) : 0; // ✅ 取得最後一次正確點擊時間
+        const searchTime = clicks.length > 0 ? Math.max(...clicks) : 0;
         data.page_index = index + 1;
         data.letter = page.letter;
         data.correct_answer = page.answer;
         data.user_answer = clicks.length;
         data.accuracy = ((clicks.length / page.answer) * 100).toFixed(1);
         data.time = searchTime.toFixed(2);
+        data.correct_timestamps = clickedCorrectTimes[index];
+        data.wrong_timestamps = clickedWrongTimes[index];
       }
     });
   });
@@ -192,39 +201,40 @@
       html += '</table><br><button onclick="downloadCSV()">Download CSV</button></div></div>';
       return html;
     },
-    choices: ['Finish'] // ✅ 完成按鈕
+    choices: ['Finish']
   });
 
   function toggleLetter(id, char, target, index) {
     const el = document.getElementById(id);
     if (!el) return;
-    const now = (performance.now() - window.trialStartTime) / 1000; // ✅ 當前點擊秒數
+    const now = (performance.now() - window.trialStartTime) / 1000;
     if (el.classList.contains('letter-selected-correct')) {
-      el.classList.remove('letter-selected-correct'); // ✅ 取消標記
+      el.classList.remove('letter-selected-correct');
     } else {
       if (char === target) {
         el.classList.add('letter-selected-correct');
-        clickedCorrectTimes[index].push(now); // ✅ 記錄正確點擊時間
+        clickedCorrectTimes[index].push(now);
       } else {
-        clickedWrongTimes[index].push(now); // ✅ 記錄錯誤點擊時間
+        clickedWrongTimes[index].push(now);
       }
     }
   }
 
   function downloadCSV() {
     const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-    let csv = 'Page,Letter,Correct,Target,Accuracy,Time\n';
+    let csv = 'Page,Letter,Correct,Target,Accuracy,Time,Correct Timestamps,Wrong Timestamps\n';
     let totalCorrect = 0, totalTarget = 0, totalTime = 0;
     trials.forEach(t => {
       if (t.page_index) {
         totalCorrect += t.user_answer;
         totalTarget += t.correct_answer;
         totalTime += parseFloat(t.time);
-        csv += `${t.page_index},${t.letter},${t.user_answer},${t.correct_answer},${t.accuracy}%,${t.time}\n`;
+        csv += `${t.page_index},${t.letter},${t.user_answer},${t.correct_answer},${t.accuracy}%,${t.time},"${t.correct_timestamps}","${t.wrong_timestamps}"\n`;
       }
     });
     const acc = ((totalCorrect / totalTarget) * 100).toFixed(1);
-    csv += `Total,,${totalCorrect},${totalTarget},${acc}%,${totalTime.toFixed(2)}\n`;
+    csv += `Total,,${totalCorrect},${totalTarget},${acc}%,${totalTime.toFixed(2)},,
+`;
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -232,6 +242,6 @@
     a.click();
   }
 
-  jsPsych.run(timeline); // ✅ 啟動實驗流程
+  jsPsych.run(timeline);
 </script>
 </html>
