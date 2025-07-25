@@ -46,185 +46,185 @@
 </head>
 <body>
   <div id="result-container"></div> <!-- ✅ 顯示結果區塊 -->
-  <script>
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''); // ✅ 固定字母順序不打亂
+<script>
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''); // ✅ 固定字母順序不打亂
 
-    // ✅ 每個字母對應的目標數量 (總數為 320)
-    const targetDistribution = [12, 13, 11, 10, 13, 11, 12, 11, 12, 12, 11, 13, 13, 11, 12, 10, 10, 13, 13, 12, 11, 12, 11, 10, 11, 12];
+  // ✅ 每個字母對應的目標數量 (總數為 320)
+  const targetDistribution = [12, 13, 11, 10, 13, 11, 12, 11, 12, 12, 11, 13, 13, 11, 12, 10, 10, 13, 13, 12, 11, 12, 11, 10, 11, 12];
 
-    // ✅ 隨機種子函數
-    function mulberry32(a) {
-      return function() {
-        var t = (a += 0x6D2B79F5);
-        t = Math.imul(t ^ (t >>> 15), t | 1);
-        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
+  // ✅ 隨機種子函數
+  function mulberry32(a) {
+    return function() {
+      var t = (a += 0x6D2B79F5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+   }
+
+  // ✅ 產生包含指定目標字母數量的文章內容
+  function generateFixedText(letter, count, seed) {
+    const rng = mulberry32(seed);
+    const lineLength = 45;
+    const totalLines = 25;
+    const totalChars = lineLength * totalLines;
+
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
+    const content = new Array(totalChars).fill(null);
+
+  // ✅ 先插入指定數量的目標字母
+    let inserted = 0;
+    while (inserted < count) {
+      const index = Math.floor(rng() * totalChars);
+      if (!content[index]) {
+        content[index] = letter;
+        inserted++;
+      }
     }
 
-    // ✅ 產生包含指定目標字母數量的文章內容
-    function generateFixedText(letter, count, seed) {
-      const rng = mulberry32(seed);
-      const lineLength = 45;
-      const totalLines = 25;
-      const totalChars = lineLength * totalLines;
-
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
-      const content = new Array(totalChars).fill(null);
-
-      // ✅ 先插入指定數量的目標字母
-      let inserted = 0;
-      while (inserted < count) {
-        const index = Math.floor(rng() * totalChars);
-        if (!content[index]) {
-          content[index] = letter;
-          inserted++;
-        }
+  // ✅ 補上其餘位置隨機字元（含空格）
+    for (let i = 0; i < totalChars; i++) {
+      if (!content[i]) {
+        let c;
+        do {
+          c = characters[Math.floor(rng() * characters.length)];
+         } while ((i % lineLength === 0 || i % lineLength === lineLength - 1) && c === ' '); // ✅ 行首與行尾不得為空格
+        content[i] = c;
       }
-
-      // ✅ 補上其餘位置隨機字元（含空格）
-      for (let i = 0; i < totalChars; i++) {
-        if (!content[i]) {
-          let c;
-          do {
-            c = characters[Math.floor(rng() * characters.length)];
-          } while ((i % lineLength === 0 || i % lineLength === lineLength - 1) && c === ' '); // ✅ 行首與行尾不得為空格
-          content[i] = c;
-        }
-      }
-
-      const lines = [];
-      for (let i = 0; i < totalLines; i++) {
-        lines.push(content.slice(i * lineLength, (i + 1) * lineLength).join(''));
-      }
-
-      return lines; // ✅ 回傳為 25 行的字串陣列
     }
+
+    const lines = [];
+    for (let i = 0; i < totalLines; i++) {
+      lines.push(content.slice(i * lineLength, (i + 1) * lineLength).join(''));
+    }
+
+    return lines; // ✅ 回傳為 25 行的字串陣列
+  }
 
     const fixedArticles = {}; // ✅ 儲存每個字母對應的固定文章
     alphabet.forEach((letter, i) => {
-      const seed = i + 1;
+    const seed = i + 1;
       fixedArticles[letter] = generateFixedText(letter, targetDistribution[i], seed);
     });
 
-    // ✅ 初始化點擊資料
+  // ✅ 初始化點擊資料
     let clickLogs = [];
 
-    function toggleLetter(id, char, target, timeStart) {
-      const el = document.getElementById(id);
-      if (!el.classList.contains('letter-selected-correct') && !el.classList.contains('letter-selected-wrong')) {
-        const clickTime = Math.round(performance.now() - timeStart);
-        if (char === target) {
-          el.classList.add('letter-selected-correct');
-          clickLogs.push({ type: 'correct', time: clickTime, letter: char });
-        } else {
-          el.classList.add('letter-selected-wrong');
-          clickLogs.push({ type: 'wrong', time: clickTime, letter: char });
-        }
+  function toggleLetter(id, char, target, timeStart) {
+    const el = document.getElementById(id);
+    if (!el.classList.contains('letter-selected-correct') && !el.classList.contains('letter-selected-wrong')) {
+      const clickTime = Math.round(performance.now() - timeStart);
+      if (char === target) {
+        el.classList.add('letter-selected-correct');
+        clickLogs.push({ type: 'correct', time: clickTime, letter: char });
+      } else {
+        el.classList.add('letter-selected-wrong');
+        clickLogs.push({ type: 'wrong', time: clickTime, letter: char });
       }
     }
+  }
 
-    // ✅ 準備每一頁任務（固定順序 A~Z）
-    const timeline = [];
+  // ✅ 準備每一頁任務（固定順序 A~Z）
+  const timeline = [];
     alphabet.forEach((letter, index) => {
-      timeline.push({
-        type: jsPsychHtmlButtonResponse,
-        stimulus: function () {
-          clickLogs = [];
-          const lines = fixedArticles[letter];
-          const timeStart = performance.now();
-          let html = `<div class="monofont">`;
-          lines.forEach((line, i) => {
-            html += '<div class="letter-line">';
-            for (let j = 0; j < line.length; j++) {
-              const char = line[j];
-              const id = `char_${index}_${i}_${j}`;
-              html += `<span id="${id}" class="letter-button" data-char="${char}" onclick="toggleLetter('${id}', '${char}', '${letter}', ${timeStart})">${char}</span>`;
-            }
-            html += '</div>'; // ✅ 每一行 div 結束
-          });
-          html += `</div><br><strong>Target Letter: ${letter}</strong><br><strong>Page ${index + 1}</strong>`;
-          return html;
-        },
-        choices: ['Continue'],
-        trial_duration: 90000,
-        on_finish: function (data) {
-          const correctClicks = clickLogs.filter(log => log.type === 'correct');
-          const timeSpent = correctClicks.length > 0 ? correctClicks[correctClicks.length - 1].time : 0;
-          data.page_index = index + 1;
-          data.target_letter = letter;
-          data.correct_target = targetDistribution[index];
-          data.correct_clicked = correctClicks.length;
-          data.page_time = timeSpent;
-          data.correct_click_times = correctClicks.map(t => t.time);
-          data.wrong_click_times = clickLogs.filter(log => log.type === 'wrong').map(t => t.time);
-        }
-      });
-    });
-
-    // ✅ 結果頁面
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: function () {
-        const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-        let html = '<div id="result-container"><h2>Results</h2><table border="1" cellpadding="6"><tr><th>Page</th><th>Target</th><th>Correct Clicked</th><th>Actual</th><th>Time (sec)</th><th>Accuracy</th></tr>';
-        let totalCorrect = 0, totalTarget = 0, totalTime = 0;
-        let clickDetails = [];
-
-        trials.forEach(t => {
-          if (t.target_letter) {
-            const acc = ((t.correct_clicked / t.correct_target) * 100).toFixed(1);
-            html += `<tr><td>${t.page_index}</td><td>${t.target_letter}</td><td>${t.correct_clicked}</td><td>${t.correct_target}</td><td>${t.page_time / 1000}</td><td>${acc}%</td></tr>`;
-            totalCorrect += t.correct_clicked;
-            totalTarget += t.correct_target;
-            totalTime += t.page_time;
-            clickDetails.push({
-              page: t.page_index,
-              target: t.target_letter,
-              correct_clicks: t.correct_click_times,
-              wrong_clicks: t.wrong_click_times
-            });
+        clickLogs = [];
+        const lines = fixedArticles[letter];
+        const timeStart = performance.now();
+        let html = `<div class="monofont">`;
+        lines.forEach((line, i) => {
+          html += '<div class="letter-line">';
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            const id = `char_${index}_${i}_${j}`;
+            html += `<span id="${id}" class="letter-button" data-char="${char}" onclick="toggleLetter('${id}', '${char}', '${letter}', ${timeStart})">${char}</span>`;
           }
+          html += '</div>'; // ✅ 每一行 div 結束
         });
-        const totalAcc = ((totalCorrect / totalTarget) * 100).toFixed(1);
-        html += `</table><p><strong>Total Correct: ${totalCorrect}/${totalTarget}</strong></p><p><strong>Total Time: ${(totalTime / 1000).toFixed(1)} seconds</strong></p><p><strong>Overall Accuracy: ${totalAcc}%</strong></p>`;
-        html += `<br><button onclick="downloadCSV()">Download CSV</button></div>`;
-
-        window.clickDetails = clickDetails;
+        html += `</div><br><strong>Target Letter: ${letter}</strong><br><strong>Page ${index + 1}</strong>`;
         return html;
       },
-      choices: ['Finish']
-    });
+      choices: ['Continue'],
+      trial_duration: 90000,
+      on_finish: function (data) {
+        const correctClicks = clickLogs.filter(log => log.type === 'correct');
+        const timeSpent = correctClicks.length > 0 ? correctClicks[correctClicks.length - 1].time : 0;
+        data.page_index = index + 1;
+        data.target_letter = letter;
+        data.correct_target = targetDistribution[index];
+        data.correct_clicked = correctClicks.length;
+        data.page_time = timeSpent;
+        data.correct_click_times = correctClicks.map(t => t.time);
+        data.wrong_click_times = clickLogs.filter(log => log.type === 'wrong').map(t => t.time);
+      }
+     });
+   });
 
-    // ✅ 匯出 CSV（分兩表格）
-    function downloadCSV() {
+  // ✅ 結果頁面
+  timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: function () {
       const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-      let summary = 'Page,Target,Correct Clicked,Actual,Time (sec),Accuracy\n';
-      let clicks = 'Page,Target,Click Type,Click #,Time (ms)\n';
+      let html = '<div id="result-container"><h2>Results</h2><table border="1" cellpadding="6"><tr><th>Page</th><th>Target</th><th>Correct Clicked</th><th>Actual</th><th>Time (sec)</th><th>Accuracy</th></tr>';
+      let totalCorrect = 0, totalTarget = 0, totalTime = 0;
+      let clickDetails = [];
 
       trials.forEach(t => {
         if (t.target_letter) {
           const acc = ((t.correct_clicked / t.correct_target) * 100).toFixed(1);
-          summary += `${t.page_index},${t.target_letter},${t.correct_clicked},${t.correct_target},${(t.page_time / 1000).toFixed(1)},${acc}%\n`;
-
-          t.correct_click_times.forEach((time, i) => {
-            clicks += `${t.page_index},${t.target_letter},correct,${i + 1},${time}\n`;
-          });
-          t.wrong_click_times.forEach((time, i) => {
-            clicks += `${t.page_index},${t.target_letter},wrong,${i + 1},${time}\n`;
+          html += `<tr><td>${t.page_index}</td><td>${t.target_letter}</td><td>${t.correct_clicked}</td><td>${t.correct_target}</td><td>${t.page_time / 1000}</td><td>${acc}%</td></tr>`;
+          totalCorrect += t.correct_clicked;
+          totalTarget += t.correct_target;
+          totalTime += t.page_time;
+          clickDetails.push({
+            page: t.page_index,
+            target: t.target_letter,
+            correct_clicks: t.correct_click_times,
+            wrong_clicks: t.wrong_click_times
           });
         }
       });
+      const totalAcc = ((totalCorrect / totalTarget) * 100).toFixed(1);
+      html += `</table><p><strong>Total Correct: ${totalCorrect}/${totalTarget}</strong></p><p><strong>Total Time: ${(totalTime / 1000).toFixed(1)} seconds</strong></p><p><strong>Overall Accuracy: ${totalAcc}%</strong></p>`;
+      html += `<br><button onclick="downloadCSV()">Download CSV</button></div>`;
 
-      const blob = new Blob([summary + '\n' + clicks], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'letter_search_result.csv';
-      a.click();
-    }
+      window.clickDetails = clickDetails;
+      return html;
+    },
+    choices: ['Finish']
+  });
 
-    jsPsych.run(timeline);
-  </script>
+  // ✅ 匯出 CSV（分兩表格）
+  function downloadCSV() {
+    const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
+    let summary = 'Page,Target,Correct Clicked,Actual,Time (sec),Accuracy\n';
+    let clicks = 'Page,Target,Click Type,Click #,Time (ms)\n';
+
+    trials.forEach(t => {
+      if (t.target_letter) {
+        const acc = ((t.correct_clicked / t.correct_target) * 100).toFixed(1);
+        summary += `${t.page_index},${t.target_letter},${t.correct_clicked},${t.correct_target},${(t.page_time / 1000).toFixed(1)},${acc}%\n`;
+
+        t.correct_click_times.forEach((time, i) => {
+          clicks += `${t.page_index},${t.target_letter},correct,${i + 1},${time}\n`;
+        });
+        t.wrong_click_times.forEach((time, i) => {
+          clicks += `${t.page_index},${t.target_letter},wrong,${i + 1},${time}\n`;
+        });
+      }
+    });
+
+    const blob = new Blob([summary + '\n' + clicks], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'letter_search_result.csv';
+    a.click();
+  }
+
+  jsPsych.run(timeline);
+</script>
 </body>
 </html>
