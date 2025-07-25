@@ -98,7 +98,31 @@
     const totalLines = 25;
     const content = Array(lineLength * totalLines).fill('');
     const rng = mulberry32(seed);
-    const positions = [...Array(lineLength * totalLines).keys()].sort(() => rng() - 0.5).slice(0, count);
+    // ✅ 建立符合條件的位置列表
+    const validPositions = []; // 儲存所有可插入位置
+    for (let line = 0; line < totalLines; line++) {
+      let inserted = 0;
+      for (let i = 0; i < lineLength; i++) {
+    // 確保第一個不能是空格，最後一個也不能是空格
+    const pos = line * lineLength + i;
+      if (i === 0 || i === lineLength - 1) continue;
+      if (inserted < 2) {
+    // 檢查左邊與右邊是否為相鄰位置（避免擠在一起）
+      if (
+        (i > 0 && validPositions.includes(pos - 1)) ||
+        (i < lineLength - 1 && validPositions.includes(pos + 1))
+      ) continue;
+      if (rng() < 0.3) { // 控制分散比例
+        validPositions.push(pos);
+        inserted++;
+        }
+      }
+    }
+  }
+
+  // ✅ 打亂可用位置並抽出需要的數量
+  const shuffled = validPositions.sort(() => rng() - 0.5);
+  const positions = shuffled.slice(0, count);
     for (const pos of positions) content[pos] = letter;
     for (let i = 0; i < content.length; i++)
       if (!content[i]) content[i] = nonTargetChars[Math.floor(rng() * nonTargetChars.length)];
