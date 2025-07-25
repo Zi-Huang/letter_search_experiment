@@ -71,42 +71,36 @@
     on_finish: () => jsPsych.data.displayData()
   });
 
-  const totalTargets = 320;
+  const totalTargets = 320; // ✅ 目標字母總數
   const clickedCorrectTimes = {}; // ✅ 儲存每頁正確字母點擊時間
   const clickedWrongTimes = {}; // ✅ 儲存錯誤點擊時間
 
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').sort(() => Math.random() - 0.5);
-  function generateDistribution(targetTotal = 320, pageCount = 26, min = 8, max = 16) {
-    let dist = Array(pageCount).fill(min);
-    let remaining = targetTotal - min * pageCount;
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').sort(() => Math.random() - 0.5); // ✅ 隨機字母順序
+  const targetDistribution = (() => {
+    const base = Array(26).fill(8); // ✅ 每篇至少8個
+    let remaining = totalTargets - 8 * 26;
     while (remaining > 0) {
-      const idx = Math.floor(Math.random() * pageCount);
-      if (dist[idx] < max) {
-        dist[idx]++;
+      const i = Math.floor(Math.random() * 26);
+      if (base[i] < 16) {
+        base[i]++;
         remaining--;
       }
     }
-    return dist;
-  }
-  const distribution = generateDistribution(320, 26, 8, 16);
+    return base;
+  })();
 
-  const pages = alphabet.map((letter, idx) => {
-    const result = generateFixedPageText(letter, distribution[idx]);
-    return { text: result.lines, answer: result.answer, letter: letter };
-  });
+  const fixedArticles = {}; // ✅ 預先產生每個字母對應的假文章
 
-  function generateFixedPageText(targetLetter = 'A', totalTargets = 12) {
+  function generateFixedText(letter, count) {
     const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
-    const nonTargetChars = allChars.replace(targetLetter, '');
+    const nonTargetChars = allChars.replace(letter, '');
     const lineLength = 45;
     const totalLines = 25;
     const content = Array(lineLength * totalLines).fill('');
-
     const positions = [...Array(lineLength * totalLines).keys()];
-    const targetPos = positions.sort(() => Math.random() - 0.5).slice(0, totalTargets);
-    for (const pos of targetPos) content[pos] = targetLetter;
+    const targetPos = positions.sort(() => Math.random() - 0.5).slice(0, count);
+    for (const pos of targetPos) content[pos] = letter;
     for (let i = 0; i < content.length; i++) if (!content[i]) content[i] = randomChar(nonTargetChars);
-
     const lines = [];
     for (let i = 0; i < totalLines; i++) {
       const line = content.slice(i * lineLength, (i + 1) * lineLength);
@@ -114,12 +108,25 @@
       if (line[44] === ' ') line[44] = randomChar(nonTargetChars);
       lines.push(line.join(''));
     }
-    return { lines, answer: totalTargets };
+    return { lines, answer: count };
   }
 
   function randomChar(set) {
     return set[Math.floor(Math.random() * set.length)];
   }
+
+  alphabet.forEach((letter, i) => {
+    fixedArticles[letter] = generateFixedText(letter, targetDistribution[i]);
+  });
+
+  const pages = alphabet.map(letter => {
+    const content = fixedArticles[letter];
+    return {
+      letter,
+      text: content.lines,
+      answer: content.answer
+    };
+  });
 
   const timeline = [];
 
@@ -143,25 +150,25 @@
             const id = `char_${index}_${i}_${j}`;
             html += `<span id="${id}" class="letter-button" data-char="${char}" onclick="toggleLetter('${id}', '${char}', '${page.letter}', ${index})">${char}</span>`;
           }
-          html += '</div>';
+          html += '</div>'; // ✅ 每行底部間距調整
         });
         html += `</div><br><strong>Page ${index + 1}</strong>`;
         return html;
       },
       choices: ['Next'],
       trial_duration: 90000,
-      on_start: function (trial) {
-        trial.data = { startTime: performance.now() };
+      on_start: function () {
+        jsPsych.data.get().addToLast({ startTime: performance.now() });
       },
       on_finish: function (data) {
-        const correctClicks = clickedCorrectTimes[index] || [];
-        const time = correctClicks.length > 0 ? Math.max(...correctClicks) : 0;
+        const clicks = clickedCorrectTimes[index] || [];
+        const searchTime = clicks.length > 0 ? Math.max(...clicks) : 0;
         data.page_index = index + 1;
         data.letter = page.letter;
         data.correct_answer = page.answer;
-        data.user_answer = correctClicks.length;
-        data.accuracy = ((correctClicks.length / page.answer) * 100).toFixed(1);
-        data.time = time.toFixed(2);
+        data.user_answer = clicks.length;
+        data.accuracy = ((clicks.length / page.answer) * 100).toFixed(1);
+        data.time = searchTime.toFixed(2);
       }
     });
   });
@@ -180,8 +187,8 @@
           html += `<tr><td>${t.page_index}</td><td>${t.letter}</td><td>${t.user_answer}</td><td>${t.correct_answer}</td><td>${t.accuracy}%</td><td>${t.time}</td></tr>`;
         }
       });
-      const totalAccuracy = ((totalCorrect / totalTarget) * 100).toFixed(1);
-      html += `<tr><th>Total</th><td></td><td>${totalCorrect}</td><td>${totalTarget}</td><td>${totalAccuracy}%</td><td>${totalTime.toFixed(2)}</td></tr>`;
+      const avgAcc = ((totalCorrect / totalTarget) * 100).toFixed(1);
+      html += `<tr><th>Total</th><td></td><td>${totalCorrect}</td><td>${totalTarget}</td><td>${avgAcc}%</td><td>${totalTime.toFixed(2)}</td></tr>`;
       html += '</table><br><button onclick="downloadCSV()">Download CSV</button></div></div>';
       return html;
     },
@@ -216,8 +223,8 @@
         csv += `${t.page_index},${t.letter},${t.user_answer},${t.correct_answer},${t.accuracy}%,${t.time}\n`;
       }
     });
-    const totalAccuracy = ((totalCorrect / totalTarget) * 100).toFixed(1);
-    csv += `Total,,${totalCorrect},${totalTarget},${totalAccuracy}%,${totalTime.toFixed(2)}\n`;
+    const acc = ((totalCorrect / totalTarget) * 100).toFixed(1);
+    csv += `Total,,${totalCorrect},${totalTarget},${acc}%,${totalTime.toFixed(2)}\n`;
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -225,7 +232,7 @@
     a.click();
   }
 
-  jsPsych.startTime = performance.now();
+  jsPsych.startTime = performance.now(); // ✅ 記錄起始時間
   jsPsych.run(timeline);
 </script>
 </html>
