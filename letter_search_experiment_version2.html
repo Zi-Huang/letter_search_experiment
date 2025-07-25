@@ -234,51 +234,25 @@
   // ✅ 匯出 CSV 檔案，含所有頁面資訊與點擊時間
   function downloadCSV() {
     const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-
-    // 第一個表格：總結頁資料
-    const summarySheet = [
-      ['Page', 'Letter', 'Correct', 'Target', 'Accuracy (%)', 'Time (s)']
-    ];
+    let csv = 'Page,Letter,Correct,Target,Accuracy,Time,Correct Timestamps,Wrong Timestamps\n';
     let totalCorrect = 0, totalTarget = 0, totalTime = 0;
     trials.forEach(t => {
       if (t.page_index) {
-        summarySheet.push([
-          t.page_index,
-          t.letter,
-          t.user_answer,
-          t.correct_answer,
-          parseFloat(t.accuracy),
-          parseFloat(t.time)
-        ]);
         totalCorrect += t.user_answer;
         totalTarget += t.correct_answer;
         totalTime += parseFloat(t.time);
+        csv += `${t.page_index},${t.letter},${t.user_answer},${t.correct_answer},${t.accuracy}%,${t.time},"${t.correct_timestamps}","${t.wrong_timestamps}"\n`;
       }
     });
-    const avgAcc = ((totalCorrect / totalTarget) * 100).toFixed(1);
-    summarySheet.push(['Total', '', totalCorrect, totalTarget, parseFloat(avgAcc), totalTime.toFixed(2)]);
-
-    // 第二個表格：每個點擊時間詳細
-    const timeSheet = [
-      ['Page', 'Letter', 'Type', 'Click #', 'Timestamp (s)']
-    ];
-    trials.forEach(t => {
-      if (t.page_index) {
-        (t.correct_timestamps || []).forEach((time, idx) => {
-          timeSheet.push([t.page_index, t.letter, 'Correct', idx + 1, time]);
-        });
-        (t.wrong_timestamps || []).forEach((time, idx) => {
-          timeSheet.push([t.page_index, t.letter, 'Wrong', idx + 1, time]);
-        });
-      }
-    });
-
-    const wb = XLSX.utils.book_new();
-    const summaryWS = XLSX.utils.aoa_to_sheet(summarySheet);
-    const timeWS = XLSX.utils.aoa_to_sheet(timeSheet);
-    XLSX.utils.book_append_sheet(wb, summaryWS, 'Summary');
-    XLSX.utils.book_append_sheet(wb, timeWS, 'ClickTimes');
-    XLSX.writeFile(wb, 'letter_search_result.xlsx');
+    const acc = ((totalCorrect / totalTarget) * 100).toFixed(1);
+    csv += `Total,,${totalCorrect},${totalTarget},${acc}%,${totalTime.toFixed(2)},,\n`;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'letter_search_result.csv';
+    a.click();
   }
+
+  jsPsych.run(timeline);
 </script>
 </html>
