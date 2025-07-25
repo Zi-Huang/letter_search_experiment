@@ -36,11 +36,15 @@
       margin: 0px;
       line-height: 1.1;
       border-radius: 2px;
-      cursor: pointer;
+      cursor: default;
       user-select: none;
     }
     .letter-selected-correct {
       background-color: gold;
+      color: black;
+    }
+    .letter-selected-wrong {
+      background-color: lightgray;
       color: black;
     }
     .letter-line {
@@ -206,17 +210,14 @@
 
   function toggleLetter(id, char, target, index) {
     const el = document.getElementById(id);
-    if (!el) return;
+    if (!el || el.classList.contains('letter-selected-correct') || el.classList.contains('letter-selected-wrong')) return;
     const now = (performance.now() - window.trialStartTime) / 1000;
-    if (el.classList.contains('letter-selected-correct')) {
-      el.classList.remove('letter-selected-correct');
+    if (char === target) {
+      el.classList.add('letter-selected-correct');
+      clickedCorrectTimes[index].push(now);
     } else {
-      if (char === target) {
-        el.classList.add('letter-selected-correct');
-        clickedCorrectTimes[index].push(now);
-      } else {
-        clickedWrongTimes[index].push(now);
-      }
+      el.classList.add('letter-selected-wrong');
+      clickedWrongTimes[index].push(now);
     }
   }
 
@@ -233,8 +234,7 @@
       }
     });
     const acc = ((totalCorrect / totalTarget) * 100).toFixed(1);
-    csv += `Total,,${totalCorrect},${totalTarget},${acc}%,${totalTime.toFixed(2)},,
-`;
+    csv += `Total,,${totalCorrect},${totalTarget},${acc}%,${totalTime.toFixed(2)},,\n`;
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
