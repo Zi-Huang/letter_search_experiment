@@ -93,7 +93,7 @@
 
   // ✅ 建立特定字母的假文章內容（固定種子）
   function generateFixedText(letter, count, seed) {
-    const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
+    const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789  ';
     const nonTargetChars = allChars.replace(letter, '');
     const lineLength = 45;
     const totalLines = 25;
