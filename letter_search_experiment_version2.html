@@ -48,7 +48,7 @@
       color: black;
     }
     .letter-line {
-      margin-bottom: 3.5px; /* ✅ 每行底部間距調整 */
+      margin-bottom: 3.5px;
       white-space: pre;
     }
     .monofont {
@@ -79,10 +79,12 @@
   const clickedCorrectTimes = {}; // ✅ 儲存每頁正確字母點擊時間
   const clickedWrongTimes = {}; // ✅ 儲存錯誤點擊時間
 
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').sort(() => Math.random() - 0.5); // ✅ 隨機字母順序
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''); // ✅ 固定字母順序，確保 A 對應 A 的文章
+
+  // ✅ 產生每個字母目標數量（總和為 320，每個介於 8~16）
   const targetDistribution = (() => {
-    const base = Array(26).fill(8); // ✅ 每篇至少8個
-    let remaining = totalTargets - 8 * 26;
+    const base = Array(26).fill(8); // 每篇至少 8 個
+    let remaining = totalTargets - 8 * 26; // 剩餘要分配的數
     while (remaining > 0) {
       const i = Math.floor(Math.random() * 26);
       if (base[i] < 16) {
@@ -93,9 +95,10 @@
     return base;
   })();
 
-  const fixedArticles = {};
-  const fixedSeeds = {};
+  const fixedArticles = {}; // ✅ 儲存每篇文章內容
+  const fixedSeeds = {};    // ✅ 確保文章內容一致用的種子值
 
+  // ✅ 根據目標字母產生文章（含指定數量的該字母）
   function generateFixedText(letter, count, seed) {
     const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
     const nonTargetChars = allChars.replace(letter, '');
@@ -105,7 +108,8 @@
     const rng = mulberry32(seed);
     const positions = [...Array(lineLength * totalLines).keys()].sort(() => rng() - 0.5).slice(0, count);
     for (const pos of positions) content[pos] = letter;
-    for (let i = 0; i < content.length; i++) if (!content[i]) content[i] = nonTargetChars[Math.floor(rng() * nonTargetChars.length)];
+    for (let i = 0; i < content.length; i++)
+      if (!content[i]) content[i] = nonTargetChars[Math.floor(rng() * nonTargetChars.length)];
     const lines = [];
     for (let i = 0; i < totalLines; i++) {
       const line = content.slice(i * lineLength, (i + 1) * lineLength);
@@ -116,6 +120,7 @@
     return { lines, answer: count };
   }
 
+  // ✅ 用固定種子確保每次生成一樣
   function mulberry32(a) {
     return function () {
       a |= 0; a = a + 0x6D2B79F5 | 0;
@@ -125,8 +130,9 @@
     }
   }
 
+  // ✅ 為每個字母生成固定文章並儲存
   alphabet.forEach((letter, i) => {
-    const seed = i + 1; // ✅ 固定種子確保每次一樣內容
+    const seed = i + 1;
     fixedSeeds[letter] = seed;
     fixedArticles[letter] = generateFixedText(letter, targetDistribution[i], seed);
   });
@@ -140,6 +146,7 @@
     };
   });
 
+  // ✅ 遊戲流程開始：加入開始畫面
   const timeline = [];
   timeline.push({
     type: jsPsychHtmlButtonResponse,
@@ -147,6 +154,7 @@
     choices: ['Start']
   });
 
+  // ✅ 每頁對應一個字母與文章
   pages.forEach((page, index) => {
     clickedCorrectTimes[index] = [];
     clickedWrongTimes[index] = [];
@@ -161,13 +169,13 @@
             const id = `char_${index}_${i}_${j}`;
             html += `<span id="${id}" class="letter-button" data-char="${char}" onclick="toggleLetter('${id}', '${char}', '${page.letter}', ${index})">${char}</span>`;
           }
-          html += '</div>'; // ✅ 每行底部間距調整
+          html += '</div>';
         });
         html += `</div><br><strong>Page ${index + 1}</strong>`;
         return html;
       },
       choices: ['Next'],
-      trial_duration: 90000,
+      trial_duration: 90000, // ✅ 每頁限時 90 秒
       on_start: function () {
         window.trialStartTime = performance.now();
       },
@@ -186,6 +194,7 @@
     });
   });
 
+  // ✅ 結果頁顯示表格與總結
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
@@ -208,6 +217,7 @@
     choices: ['Finish']
   });
 
+  // ✅ 點擊文字邏輯（記錄正確/錯誤時間）
   function toggleLetter(id, char, target, index) {
     const el = document.getElementById(id);
     if (!el || el.classList.contains('letter-selected-correct') || el.classList.contains('letter-selected-wrong')) return;
@@ -221,6 +231,7 @@
     }
   }
 
+  // ✅ 匯出 CSV 檔案，含所有頁面資訊與點擊時間
   function downloadCSV() {
     const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
     let csv = 'Page,Letter,Correct,Target,Accuracy,Time,Correct Timestamps,Wrong Timestamps\n';
