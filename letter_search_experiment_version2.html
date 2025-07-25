@@ -231,28 +231,51 @@
     }
   }
 
-  // ✅ 匯出 CSV 檔案，含所有頁面資訊與點擊時間
-  function downloadCSV() {
-    const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-    let csv = 'Page,Letter,Correct,Target,Accuracy,Time,Correct Timestamps,Wrong Timestamps\n';
-    let totalCorrect = 0, totalTarget = 0, totalTime = 0;
-    trials.forEach(t => {
-      if (t.page_index) {
-        totalCorrect += t.user_answer;
-        totalTarget += t.correct_answer;
-        totalTime += parseFloat(t.time);
-        csv += `${t.page_index},${t.letter},${t.user_answer},${t.correct_answer},${t.accuracy}%,${t.time},"${t.correct_timestamps}","${t.wrong_timestamps}"\n`;
-      }
-    });
-    const acc = ((totalCorrect / totalTarget) * 100).toFixed(1);
-    csv += `Total,,${totalCorrect},${totalTarget},${acc}%,${totalTime.toFixed(2)},,\n`;
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'letter_search_result.csv';
-    a.click();
-  }
+  // ✅ 匯出為 CSV 檔案，含兩個表格：Summary 與 Click Times，各自為獨立內容，不共用儲存格
+function downloadCSV() {
+  const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
+  let summaryCSV = 'Page,Letter,Correct,Target,Accuracy,Time\n'; // ✅ Summary 表格欄位
+  let clickCSV = 'Page,Letter,Click Type,Click Time (s)\n'; // ✅ Click Times 表格欄位
 
-  jsPsych.run(timeline);
+  let totalCorrect = 0, totalTarget = 0, totalTime = 0; // ✅ 初始化總計數值
+
+  trials.forEach(t => {
+    if (t.page_index) { // ✅ 確保是任務頁
+      totalCorrect += t.user_answer; // ✅ 累加答對數
+      totalTarget += t.correct_answer; // ✅ 累加目標數
+      totalTime += parseFloat(t.time); // ✅ 累加搜尋時間
+
+      summaryCSV += `${t.page_index},${t.letter},${t.user_answer},${t.correct_answer},${t.accuracy}%,${t.time}\n`; // ✅ 加入 Summary 列
+
+      // ✅ 加入每一筆正確點擊
+      t.correct_timestamps.forEach(ts => {
+        clickCSV += `${t.page_index},${t.letter},Correct,${ts}\n`;
+      });
+
+      // ✅ 加入每一筆錯誤點擊
+      t.wrong_timestamps.forEach(ts => {
+        clickCSV += `${t.page_index},${t.letter},Wrong,${ts}\n`;
+      });
+    }
+  });
+
+  const acc = ((totalCorrect / totalTarget) * 100).toFixed(1); // ✅ 計算總正確率
+  summaryCSV += `Total,,${totalCorrect},${totalTarget},${acc}%,${totalTime.toFixed(2)}\n`; // ✅ 加入 Summary 總結行
+
+  const blob1 = new Blob([summaryCSV], { type: 'text/csv' }); // ✅ Summary CSV 檔案
+  const blob2 = new Blob([clickCSV], { type: 'text/csv' });   // ✅ Click Times CSV 檔案
+
+  // ✅ 下載 Summary.csv
+  const a1 = document.createElement('a');
+  a1.href = URL.createObjectURL(blob1);
+  a1.download = 'letter_search_summary.csv';
+  a1.click();
+
+  // ✅ 下載 Click_Times.csv
+  const a2 = document.createElement('a');
+  a2.href = URL.createObjectURL(blob2);
+  a2.download = 'letter_search_click_times.csv';
+  a2.click();
+}
 </script>
 </html>
