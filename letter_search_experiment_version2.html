@@ -93,7 +93,7 @@
 
   // ✅ 建立特定字母的假文章內容（固定種子）
   function generateFixedText(letter, count, seed) {
-    const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789  ';
+    const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
     const nonTargetChars = allChars.replace(letter, '');
     const lineLength = 45;
     const totalLines = 25;
@@ -101,25 +101,39 @@
     const rng = mulberry32(seed);
     // ✅ 建立符合條件的位置列表
     const validPositions = []; // 儲存所有可插入位置
+    // ✅ 儲存上一行已插入的位置（避免上下重疊）
+    let lastInsertedCols = new Set();
+
     for (let line = 0; line < totalLines; line++) {
-      let inserted = 0;
-      for (let i = 0; i < lineLength; i++) {
-    // 確保第一個不能是空格，最後一個也不能是空格
-    const pos = line * lineLength + i;
-      if (i === 0 || i === lineLength - 1) continue;
-      if (inserted < 2) {
-    // 檢查左邊與右邊是否為相鄰位置（避免擠在一起）
-      if (
-        (i > 0 && validPositions.includes(pos - 1)) ||
-        (i < lineLength - 1 && validPositions.includes(pos + 1))
-      ) continue;
-      if (rng() < 0.3) { // 控制分散比例
-        validPositions.push(pos);
-        inserted++;
-        }
-      }
+  let lineInsertedCols = [];
+
+  // ✅ 建立可能的 column 值（1~43，避開兩側）
+  let possibleCols = [];
+  for (let col = 1; col < lineLength - 1; col++) {
+    // ✅ 排除上下相鄰的 column
+    if (!lastInsertedCols.has(col)) {
+      possibleCols.push(col);
     }
   }
+
+  // ✅ 打亂 column 順序，避免只從左邊挑
+  possibleCols = possibleCols.sort(() => rng() - 0.5);
+
+  for (let col of possibleCols) {
+    const pos = line * lineLength + col;
+    // ✅ 確保左右不相鄰
+    if (
+      validPositions.includes(pos - 1) ||
+      validPositions.includes(pos + 1)
+    ) continue;
+
+    validPositions.push(pos);
+    lineInsertedCols.push(col);
+    if (lineInsertedCols.length >= 2) break; // 每行最多 2 個
+  }
+
+  lastInsertedCols = new Set(lineInsertedCols);
+}
 
   // ✅ 打亂可用位置並抽出需要的數量
   const shuffled = validPositions.sort(() => rng() - 0.5);
@@ -186,15 +200,17 @@
           }
           html += '</div>';
         });
-        html += `</div><br><strong>Page ${index + 1}</strong>`;
+        html += `</div><br><div style="font-size: 16px;"><strong>Page ${index + 1}</strong>`;
         return html;
       },
-      choices: ['Next'],
+      choices: ['Continue'],
       trial_duration: 90000,
-      on_start: function () {
-        window.trialStartTime = performance.now();
+      on_load: function () {// ✅ 啟動時間記錄
+        window.trialStartTime = performance.now(); // ✅ 正確初始化時間點
+        pageStartTime = performance.now();
       },
       on_finish: function (data) {
+        data.page_total_time = 90; // ✅ 每頁總時間固定 90 秒
         const clicks = clickedCorrectTimes[index] || [];
         const searchTime = clicks.length > 0 ? Math.max(...clicks) : 0;
         data.page_index = index + 1;
@@ -248,23 +264,24 @@
   // ✅ 匯出 CSV：總結表＋點擊詳情表
   function downloadCSV() {
     const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-    let summary = 'Page,Letter,Correct,Target,Accuracy,Time\n';
+    let summary = 'Page,Letter,Correct,Target,Accuracy,Time,Total Time\n';
     let details = 'Page,Letter,Clicked Letter,Time (s),Correct\n';
-    let totalCorrect = 0, totalTarget = 0, totalTime = 0;
+    let totalCorrect = 0, totalTarget = 0, totalTime = 0; totalDuration = 0;
 
     trials.forEach(t => {
       if (t.page_index) {
         totalCorrect += t.user_answer;
         totalTarget += t.correct_answer;
         totalTime += parseFloat(t.time);
-        summary += `${t.page_index},${t.letter},${t.user_answer},${t.correct_answer},${t.accuracy}%,${t.time}\n`;
+        totalDuration += t.page_total_time || 0;
+        summary += `${t.page_index},${t.letter},${t.user_answer},${t.correct_answer},${t.accuracy}%,${t.time},${t.page_total_time} seconds\n`;
         t.clicked_details.forEach(d => {
           details += `${t.page_index},${t.letter},${d.char},${d.time},${d.isCorrect ? 'Yes' : 'No'}\n`;
         });
       }
     });
     const acc = ((totalCorrect / totalTarget) * 100).toFixed(1);
-    summary += `Total,,${totalCorrect},${totalTarget},${acc}%,${totalTime.toFixed(2)}\n`;
+    summary += `Total,,${totalCorrect},${totalTarget},${acc}%,${totalTime.toFixed(2)},${totalDuration}\n`;
 
     const blob = new Blob([summary + '\n' + details], { type: 'text/csv' });
     const a = document.createElement('a');
