@@ -25,7 +25,7 @@
       max-width: 1000px;
       width: 100%;
       margin: auto;
-      font-size: 20px;
+      font-size: 22px;
     }
     .letter-button {
       font-family: monospace;
@@ -179,7 +179,7 @@
   const timeline = [];
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<h2>Letter Search Task</h2><p>You will see 26 fixed texts. Each page has a target letter (A-Z).<br>Click all target letters within 90 seconds.</p>`,
+    stimulus: `<h2>Letter Search Task</h2><p>You will see 26 fixed texts. Each page has a target letter (A-Z).<br>Click all target letters that you find.</p>`,
     choices: ['Start']
   });
 
@@ -190,7 +190,7 @@
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: function () {
-        let html = `<div style="font-size: 22px;"><div class="word-box"><strong>Target Letter: ${page.letter}</strong></div><div class="monofont">`;
+        let html = `<div style="font-size: 24px;"><div class="word-box"><strong>Target Letter: ${page.letter}</strong></div><div class="monofont">`;
         page.text.forEach((line, i) => {
           html += '<div class="letter-line">';
           for (let j = 0; j < line.length; j++) {
@@ -228,7 +228,7 @@
     type: jsPsychHtmlButtonResponse,
     stimulus: function () {
       const trials = jsPsych.data.get().filter({ trial_type: 'html-button-response' }).values();
-      let html = '<div class="summary-wrapper"><div><h3 style="text-align:center">Summary</h3><table border="1" cellpadding="5"><tr><th>Page</th><th>Letter</th><th>Correct</th><th>Target</th><th>Accuracy</th><th>Time (s)</th></tr>';
+      let html = '<div class="summary-wrapper"><div><h3 style="text-align:center"><div style="font-size: 20px;">Summary</h3><table border="1" cellpadding="5"><tr><th>Page</th><th>Letter</th><th>Correct</th><th>Target</th><th>Accuracy</th><th>Time (s)</th></tr>';
       let totalCorrect = 0, totalTarget = 0, totalTime = 0;
       trials.forEach(t => {
         if (t.page_index) {
