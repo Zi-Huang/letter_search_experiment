@@ -190,7 +190,8 @@
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: function () {
-        let html = `<div style="font-size: 22px;"><div class="word-box"><strong>Target Letter: <div style="font-size: 24px;">${page.letter}</strong></div><div class="monofont">`;
+        let html = `<div style="font-size: 22px;"><div class="word-box">
+                    <strong>Target Letter: <div style="white-space: nowrap; font-size: 22px;">${page.letter}</strong></div><div class="monofont">`;
         page.text.forEach((line, i) => {
           html += '<div class="letter-line">';
           for (let j = 0; j < line.length; j++) {
@@ -200,7 +201,7 @@
           }
           html += '</div>';
         });
-        html += `</div><br><div style="font-size: 16px;"><strong>Page ${index + 1}</strong>`;
+        html += `</div><div style="font-size: 16px; margin-top: 12px;"><strong>Page ${index + 1}</strong>`;
         return html;
       },
       choices: ['Continue'],
