@@ -179,7 +179,7 @@
   const timeline = [];
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<h2>Letter Search Task</h2><p>You will see 26 fixed texts. Each page has a target letter (A-Z).<br>Click all target letters within 90 seconds.</p>`,
+    stimulus: `<h2>Letter Search Task</h2><p>You will see 26 fixed texts. Each page has a target letter (A-Z).<br>Click all target letters that you find.</p>`,
     choices: ['Start']
   });
 
@@ -201,7 +201,7 @@
           }
           html += '</div>';
         });
-        html += `</div><div style="font-size: 16px; margin-top: 12px;"><strong>Page ${index + 1}</strong>`;
+        html += `</div><div style="font-size: 16px; margin-top: 8px;"><strong>Page ${index + 1}</strong>`;
         return html;
       },
       choices: ['Continue'],
