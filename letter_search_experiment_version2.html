@@ -68,6 +68,11 @@
       transform: scale(0.9);  /* ✅ 整體縮小成 85% */
       transform-origin: top center;
     }
+    .table td, table th {
+      padding: 4px 8px;      /* 預設可能是 8px～12px，可以改小 */
+      line-height: 1.2;      /* 控制文字上下間距，預設通常為 1.5 */
+      font-size: 14px;       /* 表格文字也可一起縮小 */
+    }
   </style>
 </head>
 <body>
