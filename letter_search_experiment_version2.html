@@ -104,44 +104,32 @@
     const content = Array(lineLength * totalLines).fill('');
     const rng = mulberry32(seed);
     // ✅ 建立符合條件的位置列表
-    const validPositions = []; // 儲存所有可插入位置
-    // ✅ 儲存上一行已插入的位置（避免上下重疊）
-    let lastInsertedCols = new Set();
+    const positions = []; // 最後要插入目標字母的位置
+    const lineCapacities = Array(totalLines).fill(0); // 每行已插入幾個目標字母
 
-    for (let line = 0; line < totalLines; line++) {
-  let lineInsertedCols = [];
+    while (positions.length < count) {
+      const line = Math.floor(rng() * totalLines); // 隨機選一行
+      if (lineCapacities[line] >= 2) continue; // 每行最多 2 個
 
-  // ✅ 建立可能的 column 值（1~43，避開兩側）
-  let possibleCols = [];
-  for (let col = 1; col < lineLength - 1; col++) {
-    // ✅ 排除上下相鄰的 column
-    if (!lastInsertedCols.has(col)) {
-      possibleCols.push(col);
-    }
+      const col = Math.floor(rng() * (lineLength - 2)) + 1; // 避開頭尾空格
+      const pos = line * lineLength + col;
+
+  // 檢查是否已經在 positions，或左右有鄰近的
+      if (
+        positions.includes(pos) || positions.includes(pos - 1) || positions.includes(pos + 1)
+      ) continue;
+
+  // 檢查上下行是否同一欄位有字母
+      const above = (line - 1) * lineLength + col;
+      const below = (line + 1) * lineLength + col;
+      if (positions.includes(above) || positions.includes(below)) continue;
+
+  // 加入位置
+      positions.push(pos);
+      lineCapacities[line]++;
   }
-
-  // ✅ 打亂 column 順序，避免只從左邊挑
-  possibleCols = possibleCols.sort(() => rng() - 0.5);
-
-  for (let col of possibleCols) {
-    const pos = line * lineLength + col;
-    // ✅ 確保左右不相鄰
-    if (
-      validPositions.includes(pos - 1) ||
-      validPositions.includes(pos + 1)
-    ) continue;
-
-    validPositions.push(pos);
-    lineInsertedCols.push(col);
-    if (lineInsertedCols.length >= 2) break; // 每行最多 2 個
-  }
-
-  lastInsertedCols = new Set(lineInsertedCols);
-}
 
   // ✅ 打亂可用位置並抽出需要的數量
-  const shuffled = validPositions.sort(() => rng() - 0.5);
-  const positions = shuffled.slice(0, count);
     for (const pos of positions) content[pos] = letter;
     for (let i = 0; i < content.length; i++)
       if (!content[i]) content[i] = nonTargetChars[Math.floor(rng() * nonTargetChars.length)];
